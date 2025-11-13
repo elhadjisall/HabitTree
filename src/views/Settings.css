@@ -1,0 +1,239 @@
+.settings {
+  padding: var(--spacing-lg) var(--spacing-md);
+  padding-bottom: calc(70px + var(--spacing-lg));
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+}
+
+.settings-header {
+  margin-bottom: var(--spacing-xl);
+}
+
+.settings-header h1 {
+  margin: 0;
+  color: var(--fg-primary);
+}
+
+/* Profile section */
+.profile-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-xl);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  margin-bottom: var(--spacing-xl);
+}
+
+.profile-picture-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.profile-picture {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-success));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  box-shadow: var(--shadow-lg);
+  border: 4px solid white;
+}
+
+.emoji-picker {
+  display: flex;
+  gap: var(--spacing-xs);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.emoji-option {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--bg-tertiary);
+  border: 2px solid transparent;
+  font-size: 1.5rem;
+  transition: all var(--transition-base);
+  cursor: pointer;
+}
+
+.emoji-option:hover {
+  background: var(--bg-primary);
+  transform: scale(1.1);
+}
+
+.emoji-option.active {
+  border-color: var(--accent-primary);
+  background: var(--bg-primary);
+  box-shadow: 0 0 0 3px rgba(106, 176, 76, 0.2);
+}
+
+.profile-username {
+  margin: 0;
+  color: var(--fg-primary);
+  font-size: var(--font-size-2xl);
+}
+
+/* Settings sections */
+.settings-sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.settings-card {
+  padding: var(--spacing-lg);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.card-header h3 {
+  margin: 0;
+  color: var(--fg-primary);
+  font-size: var(--font-size-lg);
+}
+
+.btn-edit {
+  background: transparent;
+  color: var(--accent-primary);
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  transition: all var(--transition-base);
+}
+
+.btn-edit:hover {
+  background: var(--bg-tertiary);
+}
+
+.card-value {
+  color: var(--fg-secondary);
+  font-size: var(--font-size-base);
+  margin: 0;
+}
+
+/* Edit form */
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.edit-form input {
+  padding: var(--spacing-md);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+  font-size: var(--font-size-base);
+  color: var(--fg-primary);
+}
+
+.button-group {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
+}
+
+.button-group .btn {
+  padding: var(--spacing-sm) var(--spacing-lg);
+}
+
+/* Danger zone */
+.danger-zone {
+  border: 2px solid rgba(214, 48, 49, 0.2);
+}
+
+.danger-zone h3 {
+  margin-bottom: var(--spacing-md);
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.action-btn {
+  justify-content: flex-start;
+  padding: var(--spacing-md) var(--spacing-lg);
+}
+
+/* App info */
+.app-info {
+  text-align: center;
+  padding: var(--spacing-lg);
+  color: var(--fg-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.app-info p {
+  margin: var(--spacing-xs) 0;
+}
+
+/* Tablet */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .settings {
+    padding: var(--spacing-xl) var(--spacing-lg);
+    padding-bottom: calc(80px + var(--spacing-xl));
+  }
+
+  .action-buttons {
+    flex-direction: row;
+  }
+
+  .action-btn {
+    flex: 1;
+  }
+}
+
+/* Desktop */
+@media (min-width: 1025px) {
+  .settings {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: var(--spacing-2xl) var(--spacing-xl);
+    padding-bottom: calc(90px + var(--spacing-2xl));
+  }
+
+  .profile-picture {
+    width: 150px;
+    height: 150px;
+    font-size: 5rem;
+  }
+
+  .emoji-option {
+    width: 50px;
+    height: 50px;
+    font-size: 2rem;
+  }
+
+  .action-buttons {
+    flex-direction: row;
+  }
+
+  .action-btn {
+    flex: 1;
+  }
+
+  .settings-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+    transition: all var(--transition-base);
+  }
+}
