@@ -1,11 +1,11 @@
 """
 Habit Completion Logic
 
-This module contains algorithms for managing habit completion,
-including parent-child dependency logic.
+This module contains algorithms for managing habit completion
+and awarding leaf dollars for streaks.
 """
 from django.utils import timezone
-from datetime import date
+from datetime import date, timedelta
 from .streak_calculator import update_streak
 
 
@@ -26,26 +26,62 @@ def get_today_completion(habit):
         return None
 
 
-def mark_habit_complete(habit, notes='', all_habits=None):
+def calculate_leaf_dollars_reward(streak_before, streak_after):
     """
-    Mark a habit as complete for today.
+    Calculate leaf dollars reward based on streak increase.
+    Awards leaf dollars when streak increases (completing habit every 24 hours).
+    
+    Args:
+        streak_before: Streak count before completion
+        streak_after: Streak count after completion
+        
+    Returns:
+        int: Leaf dollars to award
+    """
+    if streak_after > streak_before:
+        # Award leaf dollars based on new streak length
+        # More leaf dollars for longer streaks
+        if streak_after >= 7:
+            return 10  # Bonus for weekly streak
+        elif streak_after >= 30:
+            return 50  # Bonus for monthly streak
+        elif streak_after >= 100:
+            return 200  # Bonus for 100-day streak
+        else:
+            return 5  # Base reward for maintaining/starting streak
+    return 0
+
+
+def mark_habit_complete(habit, notes=''):
+    """
+    Mark a habit as complete for today and award leaf dollars for streaks.
     
     Args:
         habit: Habit instance
         notes: Optional notes
-        all_habits: All habits for the user (for tree operations)
         
     Returns:
-        HabitCompletion: The completion record
+        dict: {'completion': HabitCompletion, 'leaf_dollars_earned': int, 'new_streak': int}
     """
     today = timezone.now().date()
     
+    # Get streak before completion
+    streak_before = habit.current_streak or 0
+    
+    # Check if already completed today
     completion, created = habit.completions.get_or_create(
         date=today,
         defaults={'completed': True, 'notes': notes}
     )
     
     if not created:
+        # If already completed, don't award again
+        if completion.completed:
+            return {
+                'completion': completion,
+                'leaf_dollars_earned': 0,
+                'new_streak': habit.current_streak
+            }
         completion.completed = True
         completion.notes = notes
         completion.save()
@@ -55,7 +91,20 @@ def mark_habit_complete(habit, notes='', all_habits=None):
     update_streak(habit)
     habit.save()
     
-    return completion
+    # Calculate leaf dollars reward
+    streak_after = habit.current_streak
+    leaf_dollars_earned = calculate_leaf_dollars_reward(streak_before, streak_after)
+    
+    # Award leaf dollars to user
+    if leaf_dollars_earned > 0:
+        habit.user.leaf_dollars += leaf_dollars_earned
+        habit.user.save()
+    
+    return {
+        'completion': completion,
+        'leaf_dollars_earned': leaf_dollars_earned,
+        'new_streak': streak_after
+    }
 
 
 def mark_habit_incomplete(habit):
@@ -86,29 +135,35 @@ def mark_habit_incomplete(habit):
     return completion
 
 
-def can_complete_habit(habit, all_habits=None):
+def can_complete_habit(habit):
     """
-    Check if a habit can be completed (based on parent completion).
+    Check if a habit can be completed.
+    Prevents completing the same habit multiple times in the same 24-hour period.
     
     Args:
         habit: Habit instance
-        all_habits: All habits for the user (optional, for parent lookup)
         
     Returns:
         dict: {'can_complete': bool, 'reason': str}
     """
-    # If no parent, can always complete
-    if not habit.parent_habit:
-        return {'can_complete': True, 'reason': ''}
+    today = timezone.now().date()
+    today_completion = get_today_completion(habit)
     
-    # Check if parent is completed today
-    parent_today = get_today_completion(habit.parent_habit)
-    
-    if not parent_today or not parent_today.completed:
+    # Check if already completed today
+    if today_completion and today_completion.completed:
         return {
             'can_complete': False,
-            'reason': 'Parent habit must be completed first'
+            'reason': 'Habit already completed today'
         }
+    
+    # Check if last completion was less than 24 hours ago
+    if habit.last_completed_date:
+        time_since_last = (today - habit.last_completed_date).days
+        if time_since_last < 1:
+            return {
+                'can_complete': False,
+                'reason': 'Habit can only be completed once per 24 hours'
+            }
     
     return {'can_complete': True, 'reason': ''}
 

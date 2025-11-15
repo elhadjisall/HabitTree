@@ -9,7 +9,6 @@ from .serializers import (
     UserSerializer, HabitSerializer, HabitCreateSerializer,
     HabitStatsSerializer, HabitCompletionSerializer
 )
-from .algorithms.tree_traversal import build_tree, get_descendant_ids, validate_tree_structure
 from .algorithms.habit_completion import (
     mark_habit_complete, mark_habit_incomplete,
     can_complete_habit, get_completion_stats, get_today_completion
@@ -56,7 +55,8 @@ class UserViewSet(viewsets.ModelViewSet):
             'completion_rate_today': round((total_completed / total_habits * 100) if total_habits > 0 else 0, 2),
             'total_completions': total_completions,
             'average_streak': round((total_streak / total_habits) if total_habits > 0 else 0, 2),
-            'longest_streak': longest_streak
+            'longest_streak': longest_streak,
+            'leaf_dollars': request.user.leaf_dollars
         })
 
 
@@ -78,21 +78,13 @@ class HabitViewSet(viewsets.ModelViewSet):
         """Set user when creating habit"""
         serializer.save(user=self.request.user)
     
-    @action(detail=False, methods=['get'])
-    def tree(self, request):
-        """Get all habits as tree structure"""
-        habits = self.get_queryset()
-        tree = build_tree(habits)
-        return Response(tree)
-    
     @action(detail=True, methods=['post'])
     def complete(self, request, pk=None):
-        """Mark habit as complete for today"""
+        """Mark habit as complete for today and award leaf dollars"""
         habit = self.get_object()
         
-        # Check if habit can be completed
-        all_habits = Habit.objects.filter(user=request.user)
-        can_complete = can_complete_habit(habit, all_habits)
+        # Check if habit can be completed (24-hour rule)
+        can_complete = can_complete_habit(habit)
         
         if not can_complete['can_complete']:
             return Response(
@@ -101,9 +93,14 @@ class HabitViewSet(viewsets.ModelViewSet):
             )
         
         notes = request.data.get('notes', '')
-        completion = mark_habit_complete(habit, notes, all_habits)
+        result = mark_habit_complete(habit, notes)
         
-        return Response(HabitCompletionSerializer(completion).data)
+        return Response({
+            'completion': HabitCompletionSerializer(result['completion']).data,
+            'leaf_dollars_earned': result['leaf_dollars_earned'],
+            'new_streak': result['new_streak'],
+            'total_leaf_dollars': habit.user.leaf_dollars
+        })
     
     @action(detail=True, methods=['post'])
     def incomplete(self, request, pk=None):
@@ -128,36 +125,4 @@ class HabitViewSet(viewsets.ModelViewSet):
         serializer = HabitStatsSerializer(stats)
         return Response(serializer.data)
     
-    @action(detail=True, methods=['put'])
-    def move(self, request, pk=None):
-        """Move habit to different parent"""
-        habit = self.get_object()
-        new_parent_id = request.data.get('new_parent_id')
-        
-        # Validate new parent
-        if new_parent_id:
-            try:
-                new_parent = Habit.objects.get(id=new_parent_id, user=request.user)
-                
-                # Prevent moving to own descendant
-                all_habits = Habit.objects.filter(user=request.user)
-                descendants = get_descendant_ids(all_habits, habit.id)
-                if new_parent.id in descendants:
-                    return Response(
-                        {'error': 'Cannot move habit to its own descendant'},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-                
-                habit.parent_habit = new_parent
-            except Habit.DoesNotExist:
-                return Response(
-                    {'error': 'New parent habit not found'},
-                    status=status.HTTP_404_NOT_FOUND
-                )
-        else:
-            habit.parent_habit = None
-        
-        habit.save()
-        serializer = self.get_serializer(habit)
-        return Response(serializer.data)
 

@@ -7,6 +7,7 @@ from django.utils import timezone
 class User(AbstractUser):
     """Custom User model extending Django's AbstractUser"""
     email = models.EmailField(unique=True)
+    leaf_dollars = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     last_login = models.DateTimeField(null=True, blank=True)
 
@@ -18,19 +19,10 @@ class User(AbstractUser):
 
 
 class Habit(models.Model):
-    """Habit model with tree structure support"""
+    """Habit model"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='habits')
     title = models.CharField(max_length=100, validators=[MinLengthValidator(1)])
     description = models.TextField(max_length=500, blank=True)
-    
-    # Tree structure
-    parent_habit = models.ForeignKey(
-        'self',
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name='children'
-    )
     
     # Habit settings
     is_active = models.BooleanField(default=True)
@@ -49,7 +41,6 @@ class Habit(models.Model):
     class Meta:
         db_table = 'habits'
         indexes = [
-            models.Index(fields=['user', 'parent_habit']),
             models.Index(fields=['user', 'is_active']),
         ]
 
