@@ -4,7 +4,7 @@ from .models import Habit, HabitCompletion
 
 @admin.register(Habit)
 class HabitAdmin(admin.ModelAdmin):
-    list_display = ['title', 'user', 'parent_habit', 'is_active', 'current_streak', 'longest_streak']
+    list_display = ['title', 'user', 'is_active', 'current_streak', 'longest_streak']
     list_filter = ['is_active', 'created_at']
     search_fields = ['title', 'user__username']
     readonly_fields = ['created_at', 'updated_at']
