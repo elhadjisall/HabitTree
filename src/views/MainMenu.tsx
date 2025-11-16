@@ -1,7 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './MainMenu.css';
 
 const WEEKDAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+
+const MOTIVATIONAL_MESSAGES = [
+  "You've got this! 💪",
+  "Keep up the great work!",
+  "One step at a time! 🌟",
+  "I believe in you!",
+  "Progress over perfection!",
+  "You're doing amazing! ✨",
+  "Stay consistent! 🔥",
+  "Every day counts!"
+];
 
 interface CheckboxHabit {
   id: number;
@@ -9,6 +20,7 @@ interface CheckboxHabit {
   type: 'checkbox';
   color: string;
   completed: boolean;
+  streak: number;
 }
 
 interface NumericHabit {
@@ -19,56 +31,129 @@ interface NumericHabit {
   unit: string;
   color: string;
   currentValue: number;
+  streak: number;
 }
 
 type Habit = CheckboxHabit | NumericHabit;
 
 // Mock data for habits
 const MOCK_HABITS: Habit[] = [
-  { id: 1, name: 'Morning Exercise', type: 'checkbox', color: '#6ab04c', completed: false },
-  { id: 2, name: 'Read 30 pages', type: 'checkbox', color: '#4a7c59', completed: false },
-  { id: 3, name: 'Meditate', type: 'checkbox', color: '#00b894', completed: false },
-  { id: 4, name: 'Walk 5km', type: 'numeric', target: 5, unit: 'km', color: '#fdcb6e', currentValue: 0 },
-  { id: 5, name: 'Drink Water', type: 'numeric', target: 8, unit: 'glasses', color: '#74b9ff', currentValue: 0 },
+  { id: 1, name: 'Morning Exercise', type: 'checkbox', color: '#6ab04c', completed: false, streak: 5 },
+  { id: 2, name: 'Read 30 pages', type: 'checkbox', color: '#4a7c59', completed: false, streak: 3 },
+  { id: 3, name: 'Meditate', type: 'checkbox', color: '#00b894', completed: false, streak: 7 },
+  { id: 4, name: 'Walk 5km', type: 'numeric', target: 5, unit: 'km', color: '#fdcb6e', currentValue: 0, streak: 2 },
+  { id: 5, name: 'Drink Water', type: 'numeric', target: 8, unit: 'glasses', color: '#74b9ff', currentValue: 0, streak: 10 },
+  { id: 6, name: 'Quit Smoking', type: 'checkbox', color: '#d63031', completed: false, streak: 14 },
 ];
 
 const MainMenu: React.FC = () => {
-  const [habits, setHabits] = useState<Habit[]>(MOCK_HABITS);
-  const [selectedDay, setSelectedDay] = useState<number>(new Date().getDay());
-
   const getTodayIndex = (): number => {
     const day = new Date().getDay();
     return day === 0 ? 6 : day - 1; // Convert Sunday (0) to 6, Monday (1) to 0, etc.
   };
+
+  const [habits, setHabits] = useState<Habit[]>(MOCK_HABITS);
+  const [selectedDay, setSelectedDay] = useState<number>(getTodayIndex());
+  const [showSpeechBubble, setShowSpeechBubble] = useState<boolean>(false);
+  const [currentMessage, setCurrentMessage] = useState<string>('');
+  const [completedHabitId, setCompletedHabitId] = useState<number | null>(null);
+
+  // Get selected character from localStorage (same as TreeCharacter component)
+  const getSelectedCharacter = (): string => {
+    const storedCharacterId = localStorage.getItem('selectedCharacter');
+    const characterId = storedCharacterId ? parseInt(storedCharacterId) : 1;
+
+    const characters = [
+      { id: 1, emoji: '🦊' },
+      { id: 2, emoji: '🦉' },
+      { id: 3, emoji: '🐰' },
+      { id: 4, emoji: '🦌' },
+      { id: 5, emoji: '🐢' },
+      { id: 6, emoji: '🐉' },
+    ];
+
+    const character = characters.find(c => c.id === characterId);
+    return character ? character.emoji : '🦊';
+  };
+
+  // Show motivational speech bubble every 5 seconds when viewing today
+  useEffect(() => {
+    if (!isToday(selectedDay)) {
+      setShowSpeechBubble(false);
+      return;
+    }
+
+    const showMessage = () => {
+      const randomMessage = MOTIVATIONAL_MESSAGES[Math.floor(Math.random() * MOTIVATIONAL_MESSAGES.length)];
+      setCurrentMessage(randomMessage);
+      setShowSpeechBubble(true);
+
+      setTimeout(() => {
+        setShowSpeechBubble(false);
+      }, 3000);
+    };
+
+    const interval = setInterval(showMessage, 5000);
+    showMessage(); // Show immediately on mount
+
+    return () => clearInterval(interval);
+  }, [selectedDay]);
 
   const isToday = (dayIndex: number): boolean => {
     return dayIndex === getTodayIndex();
   };
 
   const handleCheckboxToggle = (id: number): void => {
-    setHabits(habits.map(habit =>
-      habit.id === id && isToday(selectedDay)
-        ? { ...habit, completed: habit.type === 'checkbox' ? !habit.completed : false }
-        : habit
-    ));
+    setHabits(habits.map(habit => {
+      if (habit.id === id && isToday(selectedDay) && habit.type === 'checkbox') {
+        const newCompleted = !habit.completed;
+        if (newCompleted) {
+          setCompletedHabitId(id);
+          setTimeout(() => setCompletedHabitId(null), 600);
+        }
+        return {
+          ...habit,
+          completed: newCompleted,
+          streak: newCompleted ? habit.streak + 1 : habit.streak
+        };
+      }
+      return habit;
+    }));
   };
 
   const handleNumericChange = (id: number, value: string): void => {
-    setHabits(habits.map(habit =>
-      habit.id === id && isToday(selectedDay)
-        ? { ...habit, currentValue: habit.type === 'numeric' ? Math.max(0, Number(value) || 0) : 0 }
-        : habit
-    ));
+    setHabits(habits.map(habit => {
+      if (habit.id === id && isToday(selectedDay) && habit.type === 'numeric') {
+        const newValue = Math.max(0, Number(value) || 0);
+        const previousValue = habit.currentValue;
+        const wasCompleted = previousValue >= habit.target * 0.5;
+        const isNowCompleted = newValue >= habit.target * 0.5;
+        if (!wasCompleted && isNowCompleted) {
+          setCompletedHabitId(id);
+          setTimeout(() => setCompletedHabitId(null), 600);
+        }
+        return {
+          ...habit,
+          currentValue: newValue,
+          streak: !wasCompleted && isNowCompleted ? habit.streak + 1 : habit.streak
+        };
+      }
+      return habit;
+    }));
   };
 
   return (
     <div className="main-menu">
       <header className="menu-header">
-        <h1>My Quests</h1>
-        <div className="streak-badge">
-          <span className="streak-icon">🔥</span>
-          <span className="streak-count">7 day streak</span>
-        </div>
+        <h1 className="quests-title">My Quests</h1>
+        {isToday(selectedDay) && (
+          <div className="avatar-container">
+            {showSpeechBubble && (
+              <div className="speech-bubble">{currentMessage}</div>
+            )}
+            <div className="character-avatar">{getSelectedCharacter()}</div>
+          </div>
+        )}
       </header>
 
       {/* Weekday selector */}
@@ -92,15 +177,24 @@ const MainMenu: React.FC = () => {
       <div className="habits-list">
         {!isToday(selectedDay) && (
           <div className="view-only-notice">
-            📖 Viewing past day - changes disabled
+            {selectedDay < getTodayIndex() ? '📖 Viewing past day — changes disabled' : '📖 Viewing a future day — changes disabled'}
           </div>
         )}
 
         {habits.map(habit => (
-          <div key={habit.id} className="habit-card" style={{ borderLeftColor: habit.color }}>
+          <div
+            key={habit.id}
+            className={`habit-card ${completedHabitId === habit.id ? 'completed-animation' : ''}`}
+            style={{ borderLeftColor: habit.color }}
+          >
             <div className="habit-info">
               <div className="habit-color-dot" style={{ backgroundColor: habit.color }}></div>
               <h3 className="habit-name">{habit.name}</h3>
+            </div>
+
+            <div className="habit-streak">
+              <span className="streak-icon">🔥</span>
+              <span className="streak-number">{habit.streak}</span>
             </div>
 
             {habit.type === 'checkbox' ? (
