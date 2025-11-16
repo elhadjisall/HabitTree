@@ -1,17 +1,36 @@
 import React, { useState } from 'react';
 import './Calendar.css';
 
-interface Habit {
+interface CheckboxHabit {
   id: number;
   name: string;
+  type: 'checkbox';
   color: string;
+  completed: boolean;
+  streak: number;
 }
 
-// Mock habits
+interface NumericHabit {
+  id: number;
+  name: string;
+  type: 'numeric';
+  target: number;
+  unit: string;
+  color: string;
+  currentValue: number;
+  streak: number;
+}
+
+type Habit = CheckboxHabit | NumericHabit;
+
+// Same habits as MainMenu
 const MOCK_HABITS: Habit[] = [
-  { id: 1, name: 'Morning Exercise', color: '#6ab04c' },
-  { id: 2, name: 'Read 30 pages', color: '#4a7c59' },
-  { id: 3, name: 'Meditate', color: '#00b894' },
+  { id: 1, name: 'Morning Exercise', type: 'checkbox', color: '#6ab04c', completed: false, streak: 5 },
+  { id: 2, name: 'Read 30 pages', type: 'checkbox', color: '#4a7c59', completed: false, streak: 3 },
+  { id: 3, name: 'Meditate', type: 'checkbox', color: '#00b894', completed: false, streak: 7 },
+  { id: 4, name: 'Walk 5km', type: 'numeric', target: 5, unit: 'km', color: '#fdcb6e', currentValue: 0, streak: 2 },
+  { id: 5, name: 'Drink Water', type: 'numeric', target: 8, unit: 'glasses', color: '#74b9ff', currentValue: 0, streak: 10 },
+  { id: 6, name: 'Quit Smoking', type: 'checkbox', color: '#d63031', completed: false, streak: 14 },
 ];
 
 const MONTHS = [
@@ -36,7 +55,11 @@ const Calendar: React.FC = () => {
   const currentDate = new Date();
   const [selectedHabit, setSelectedHabit] = useState<number>(MOCK_HABITS[0].id);
   const [selectedMonth, setSelectedMonth] = useState<number>(currentDate.getMonth());
-  const [selectedYear] = useState<number>(currentDate.getFullYear());
+  const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
+
+  // Generate year options (previous, current, next year)
+  const currentYear = currentDate.getFullYear();
+  const yearOptions = [currentYear - 1, currentYear, currentYear + 1];
 
   const calendarData = generateMockCalendarData(selectedYear, selectedMonth);
   const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
@@ -59,16 +82,34 @@ const Calendar: React.FC = () => {
   // Actual days
   for (let day = 1; day <= daysInMonth; day++) {
     const isCompleted = calendarData[day];
-    const isToday = day === currentDate.getDate() && selectedMonth === currentDate.getMonth();
+    const isToday = day === currentDate.getDate() &&
+                    selectedMonth === currentDate.getMonth() &&
+                    selectedYear === currentDate.getFullYear();
+
+    // Check if this day is in the future
+    const dayDate = new Date(selectedYear, selectedMonth, day);
+    const isFuture = dayDate > currentDate;
+
+    // Determine if month has no data (all future or no habit started)
+    const monthHasNoData = selectedYear > currentYear ||
+                           (selectedYear === currentYear && selectedMonth > currentDate.getMonth());
 
     calendarDays.push(
       <div
         key={day}
-        className={`calendar-day ${isCompleted ? 'completed' : 'missed'} ${isToday ? 'today' : ''}`}
-        aria-label={`Day ${day}, ${isCompleted ? 'completed' : 'missed'}`}
+        className={`calendar-day ${
+          isFuture || monthHasNoData ? 'disabled' :
+          isToday && !isCompleted ? 'today-pending' :
+          isCompleted ? 'completed' : 'missed'
+        } ${isToday ? 'today' : ''}`}
+        aria-label={`Day ${day}, ${isFuture ? 'future' : isCompleted ? 'completed' : 'missed'}`}
       >
         <span className="day-number">{day}</span>
-        <span className="day-status">{isCompleted ? '✓' : '✗'}</span>
+        {!isFuture && !monthHasNoData && (
+          <span className="day-status">
+            {isToday && !isCompleted ? '' : isCompleted ? '✓' : '✗'}
+          </span>
+        )}
       </div>
     );
   }
@@ -76,13 +117,13 @@ const Calendar: React.FC = () => {
   return (
     <div className="calendar-view">
       <header className="calendar-header">
-        <h1>Progress Calendar</h1>
+        <h1 className="calendar-title">Progress Calendar</h1>
       </header>
 
       {/* Dropdowns */}
       <div className="calendar-controls">
         <div className="dropdown-group">
-          <label htmlFor="habit-select">Habit:</label>
+          <label htmlFor="habit-select">Quest:</label>
           <select
             id="habit-select"
             value={selectedHabit}
@@ -113,6 +154,22 @@ const Calendar: React.FC = () => {
             ))}
           </select>
         </div>
+
+        <div className="dropdown-group">
+          <label htmlFor="year-select">Year:</label>
+          <select
+            id="year-select"
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(Number(e.target.value))}
+            className="year-dropdown"
+          >
+            {yearOptions.map(year => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Weekday headers */}
@@ -131,26 +188,38 @@ const Calendar: React.FC = () => {
 
       {/* Summary */}
       <div className="calendar-summary">
-        <div className="summary-card">
-          <div className="summary-stat">
+        <div className="summary-stat-card">
+          <div className="stat-icon">⭐</div>
+          <div className="stat-content">
             <span className="stat-value">{completedDays}</span>
             <span className="stat-label">Days Completed</span>
           </div>
-          <div className="summary-divider"></div>
-          <div className="summary-stat">
+        </div>
+
+        <div className="summary-stat-card">
+          <div className="stat-icon">📅</div>
+          <div className="stat-content">
             <span className="stat-value">{daysInMonth - completedDays}</span>
             <span className="stat-label">Days Missed</span>
           </div>
-          <div className="summary-divider"></div>
-          <div className="summary-stat">
+        </div>
+
+        <div className="summary-stat-card">
+          <div className="stat-icon">🔥</div>
+          <div className="stat-content">
             <span className="stat-value">{completionRate}%</span>
             <span className="stat-label">Success Rate</span>
           </div>
         </div>
 
-        <p className="summary-text">
-          {completedDays} / {daysInMonth} days completed this month
-        </p>
+        <div className="summary-progress-card">
+          <div className="progress-bar">
+            <div className="progress-fill" style={{ width: `${completionRate}%` }}></div>
+          </div>
+          <p className="progress-text">
+            {completedDays} / {daysInMonth} days completed
+          </p>
+        </div>
       </div>
     </div>
   );
