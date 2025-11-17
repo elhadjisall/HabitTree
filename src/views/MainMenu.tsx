@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import './MainMenu.css';
 import { getLeafDollars, addLeafDollars, subtractLeafDollars } from '../utils/leafDollarsStorage';
 import { updateHabitLog, getTodayDateString, formatDate, isNumericHabitCompleted, getHabitLog } from '../utils/habitLogsStore';
+import { useHabits } from '../hooks/useHabits';
+import { calculateStreak } from '../utils/streakCalculation';
+import type { Habit } from '../utils/habitsStore';
 
 const WEEKDAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 
@@ -16,37 +19,11 @@ const MOTIVATIONAL_MESSAGES = [
   "Every day counts!"
 ];
 
-interface CheckboxHabit {
-  id: number;
-  name: string;
-  type: 'checkbox';
-  color: string;
+interface HabitUIState {
+  id: string;
   completed: boolean;
-  streak: number;
-}
-
-interface NumericHabit {
-  id: number;
-  name: string;
-  type: 'numeric';
-  target: number;
-  unit: string;
-  color: string;
   currentValue: number;
-  streak: number;
 }
-
-type Habit = CheckboxHabit | NumericHabit;
-
-// Mock data for habits
-const MOCK_HABITS: Habit[] = [
-  { id: 1, name: 'Morning Exercise', type: 'checkbox', color: '#6ab04c', completed: false, streak: 5 },
-  { id: 2, name: 'Read 30 pages', type: 'checkbox', color: '#4a7c59', completed: false, streak: 3 },
-  { id: 3, name: 'Meditate', type: 'checkbox', color: '#00b894', completed: false, streak: 7 },
-  { id: 4, name: 'Walk 5km', type: 'numeric', target: 5, unit: 'km', color: '#fdcb6e', currentValue: 0, streak: 2 },
-  { id: 5, name: 'Drink Water', type: 'numeric', target: 8, unit: 'glasses', color: '#74b9ff', currentValue: 0, streak: 10 },
-  { id: 6, name: 'Quit Smoking', type: 'checkbox', color: '#d63031', completed: false, streak: 14 },
-];
 
 const MainMenu: React.FC = () => {
   const getTodayIndex = (): number => {
@@ -54,14 +31,15 @@ const MainMenu: React.FC = () => {
     return day === 0 ? 6 : day - 1; // Convert Sunday (0) to 6, Monday (1) to 0, etc.
   };
 
-  const [habits, setHabits] = useState<Habit[]>(MOCK_HABITS);
+  const habits = useHabits(); // Get habits from store
+  const [habitStates, setHabitStates] = useState<Record<string, HabitUIState>>({});
   const [selectedDay, setSelectedDay] = useState<number>(getTodayIndex());
   const [showSpeechBubble, setShowSpeechBubble] = useState<boolean>(false);
   const [currentMessage, setCurrentMessage] = useState<string>('');
-  const [completedHabitId, setCompletedHabitId] = useState<number | null>(null);
+  const [completedHabitId, setCompletedHabitId] = useState<string | null>(null);
   const [leafDollars, setLeafDollarsState] = useState<number>(getLeafDollars());
 
-  // Get selected character from localStorage (same as TreeCharacter component)
+  // Get selected character from localStorage
   const getSelectedCharacter = (): string => {
     const storedCharacterId = localStorage.getItem('selectedCharacter');
     const characterId = storedCharacterId ? parseInt(storedCharacterId) : 1;
@@ -79,7 +57,7 @@ const MainMenu: React.FC = () => {
     return character ? character.emoji : '🦊';
   };
 
-  // Load initial habit completion state from shared store
+  // Load habit states from logs for selected day
   useEffect(() => {
     const today = new Date();
     const dayOffset = selectedDay - getTodayIndex();
@@ -87,18 +65,17 @@ const MainMenu: React.FC = () => {
     targetDate.setDate(today.getDate() + dayOffset);
     const dateString = formatDate(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
 
-    setHabits(MOCK_HABITS.map(habit => {
+    const newStates: Record<string, HabitUIState> = {};
+    habits.forEach(habit => {
       const log = getHabitLog(habit.id, dateString);
-      if (log) {
-        if (habit.type === 'checkbox') {
-          return { ...habit, completed: log.completed };
-        } else {
-          return { ...habit, currentValue: log.value || 0 };
-        }
-      }
-      return habit;
-    }));
-  }, [selectedDay]);
+      newStates[habit.id] = {
+        id: habit.id,
+        completed: log?.completed || false,
+        currentValue: log?.value || 0
+      };
+    });
+    setHabitStates(newStates);
+  }, [selectedDay, habits]);
 
   // Show motivational speech bubble every 5 seconds when viewing today
   useEffect(() => {
@@ -127,62 +104,59 @@ const MainMenu: React.FC = () => {
     return dayIndex === getTodayIndex();
   };
 
-  const handleCheckboxToggle = (id: number): void => {
-    setHabits(habits.map(habit => {
-      if (habit.id === id && isToday(selectedDay) && habit.type === 'checkbox') {
-        const newCompleted = !habit.completed;
+  const handleCheckboxToggle = (habit: Habit): void => {
+    if (!isToday(selectedDay) || (habit.trackingType !== 'tick_cross' && habit.trackingType !== 'quit')) return;
 
-        // Save to shared habit logs store
-        const dateString = getTodayDateString();
-        updateHabitLog(id, dateString, newCompleted);
+    const currentState = habitStates[habit.id];
+    const newCompleted = !currentState.completed;
 
-        if (newCompleted) {
-          setCompletedHabitId(id);
-          setTimeout(() => setCompletedHabitId(null), 600);
-          // Award +1 leaf dollar for completing the habit
-          const newBalance = addLeafDollars(1);
-          setLeafDollarsState(newBalance);
-        }
-        return {
-          ...habit,
-          completed: newCompleted,
-          streak: newCompleted ? habit.streak + 1 : habit.streak
-        };
-      }
-      return habit;
+    // Save to shared habit logs store
+    const dateString = getTodayDateString();
+    updateHabitLog(habit.id, dateString, newCompleted);
+
+    // Update local UI state
+    setHabitStates(prev => ({
+      ...prev,
+      [habit.id]: { ...prev[habit.id], completed: newCompleted }
     }));
+
+    if (newCompleted) {
+      setCompletedHabitId(habit.id);
+      setTimeout(() => setCompletedHabitId(null), 600);
+      // Award +1 leaf dollar
+      const newBalance = addLeafDollars(1);
+      setLeafDollarsState(newBalance);
+    }
   };
 
-  const handleNumericChange = (id: number, value: string): void => {
-    setHabits(habits.map(habit => {
-      if (habit.id === id && isToday(selectedDay) && habit.type === 'numeric') {
-        const newValue = Math.max(0, Number(value) || 0);
-        const previousValue = habit.currentValue;
-        const wasCompleted = isNumericHabitCompleted(previousValue, habit.target);
-        const isNowCompleted = isNumericHabitCompleted(newValue, habit.target);
+  const handleNumericChange = (habit: Habit, value: string): void => {
+    if (!isToday(selectedDay) || habit.trackingType !== 'variable_amount') return;
 
-        // Save to shared habit logs store
-        const dateString = getTodayDateString();
-        updateHabitLog(id, dateString, isNowCompleted, newValue);
+    const newValue = Math.max(0, Number(value) || 0);
+    const previousValue = habitStates[habit.id]?.currentValue || 0;
+    const wasCompleted = habit.target_amount !== undefined && isNumericHabitCompleted(previousValue, habit.target_amount);
+    const isNowCompleted = habit.target_amount !== undefined && isNumericHabitCompleted(newValue, habit.target_amount);
 
-        if (!wasCompleted && isNowCompleted) {
-          setCompletedHabitId(id);
-          setTimeout(() => setCompletedHabitId(null), 600);
-          // Award +1 leaf dollar for completing the habit (≥50%)
-          const newBalance = addLeafDollars(1);
-          setLeafDollarsState(newBalance);
-        }
-        return {
-          ...habit,
-          currentValue: newValue,
-          streak: !wasCompleted && isNowCompleted ? habit.streak + 1 : habit.streak
-        };
-      }
-      return habit;
+    // Save to shared habit logs store
+    const dateString = getTodayDateString();
+    updateHabitLog(habit.id, dateString, isNowCompleted, newValue);
+
+    // Update local UI state
+    setHabitStates(prev => ({
+      ...prev,
+      [habit.id]: { ...prev[habit.id], currentValue: newValue }
     }));
+
+    if (!wasCompleted && isNowCompleted) {
+      setCompletedHabitId(habit.id);
+      setTimeout(() => setCompletedHabitId(null), 600);
+      // Award +1 leaf dollar
+      const newBalance = addLeafDollars(1);
+      setLeafDollarsState(newBalance);
+    }
   };
 
-  const handleReviveStreak = (id: number): void => {
+  const handleReviveStreak = (habit: Habit): void => {
     if (leafDollars < 10) {
       alert('Not enough Leaf Dollars! You need 10 🍃 to revive a streak.');
       return;
@@ -199,32 +173,22 @@ const MainMenu: React.FC = () => {
       targetDate.setDate(today.getDate() + dayOffset);
       const dateString = formatDate(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
 
-      setHabits(habits.map(habit => {
-        if (habit.id === id) {
-          if (habit.type === 'checkbox') {
-            // Save to shared habit logs store
-            updateHabitLog(id, dateString, true);
+      // Save completion to logs
+      if (habit.trackingType === 'variable_amount' && habit.target_amount) {
+        updateHabitLog(habit.id, dateString, true, habit.target_amount);
+        setHabitStates(prev => ({
+          ...prev,
+          [habit.id]: { ...prev[habit.id], currentValue: habit.target_amount!, completed: true }
+        }));
+      } else {
+        updateHabitLog(habit.id, dateString, true);
+        setHabitStates(prev => ({
+          ...prev,
+          [habit.id]: { ...prev[habit.id], completed: true }
+        }));
+      }
 
-            return {
-              ...habit,
-              completed: true,
-              streak: habit.streak + 1
-            };
-          } else {
-            // Save to shared habit logs store
-            updateHabitLog(id, dateString, true, habit.target);
-
-            return {
-              ...habit,
-              currentValue: habit.target,
-              streak: habit.streak + 1
-            };
-          }
-        }
-        return habit;
-      }));
-
-      setCompletedHabitId(id);
+      setCompletedHabitId(habit.id);
       setTimeout(() => setCompletedHabitId(null), 600);
     }
   };
@@ -274,60 +238,69 @@ const MainMenu: React.FC = () => {
           </div>
         )}
 
-        {habits.map(habit => (
-          <div
-            key={habit.id}
-            className={`habit-card ${completedHabitId === habit.id ? 'completed-animation' : ''}`}
-            style={{ borderLeftColor: habit.color }}
-          >
-            <div className="habit-info">
-              <div className="habit-color-dot" style={{ backgroundColor: habit.color }}></div>
-              <h3 className="habit-name">{habit.name}</h3>
-            </div>
+        {habits.map(habit => {
+          const state = habitStates[habit.id] || { completed: false, currentValue: 0 };
+          const streak = calculateStreak(habit); // Calculate streak from logs
 
-            <div className="habit-streak">
-              <span className="streak-icon">🔥</span>
-              <span className="streak-number">{habit.streak}</span>
-            </div>
-
-            {habit.type === 'checkbox' ? (
-              <label className="habit-checkbox">
-                <input
-                  type="checkbox"
-                  checked={habit.completed}
-                  onChange={() => handleCheckboxToggle(habit.id)}
-                  disabled={!isToday(selectedDay)}
-                  aria-label={`Mark ${habit.name} as ${habit.completed ? 'incomplete' : 'complete'}`}
-                />
-                <span className="checkbox-custom"></span>
-              </label>
-            ) : (
-              <div className="habit-numeric">
-                <input
-                  type="number"
-                  min="0"
-                  max={habit.target}
-                  value={habit.currentValue}
-                  onChange={(e) => handleNumericChange(habit.id, e.target.value)}
-                  disabled={!isToday(selectedDay)}
-                  aria-label={`${habit.name} progress`}
-                />
-                <span className="numeric-target">/ {habit.target} {habit.unit}</span>
+          return (
+            <div
+              key={habit.id}
+              className={`habit-card ${completedHabitId === habit.id ? 'completed-animation' : ''}`}
+              style={{ borderLeftColor: habit.color }}
+            >
+              <div className="habit-info">
+                <div className="habit-color-dot" style={{ backgroundColor: habit.color }}></div>
+                <div className="habit-details">
+                  <h3 className="habit-name">
+                    {habit.emoji} {habit.label}
+                  </h3>
+                </div>
               </div>
-            )}
 
-            {/* Revive streak button for past days */}
-            {!isToday(selectedDay) && selectedDay < getTodayIndex() && (
-              <button
-                className="revive-btn"
-                onClick={() => handleReviveStreak(habit.id)}
-                title="Revive streak for 10 Leaf Dollars"
-              >
-                💚 10🍃
-              </button>
-            )}
-          </div>
-        ))}
+              <div className="habit-streak">
+                <span className="streak-icon">🔥</span>
+                <span className="streak-number">{streak}</span>
+              </div>
+
+              {habit.trackingType === 'tick_cross' || habit.trackingType === 'quit' ? (
+                <label className="habit-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={state.completed}
+                    onChange={() => handleCheckboxToggle(habit)}
+                    disabled={!isToday(selectedDay)}
+                    aria-label={`Mark ${habit.label} as ${state.completed ? 'incomplete' : 'complete'}`}
+                  />
+                  <span className="checkbox-custom"></span>
+                </label>
+              ) : (
+                <div className="habit-numeric">
+                  <input
+                    type="number"
+                    min="0"
+                    max={habit.target_amount}
+                    value={state.currentValue}
+                    onChange={(e) => handleNumericChange(habit, e.target.value)}
+                    disabled={!isToday(selectedDay)}
+                    aria-label={`${habit.label} progress`}
+                  />
+                  <span className="numeric-target">/ {habit.target_amount} {habit.unit}</span>
+                </div>
+              )}
+
+              {/* Revive streak button for past days */}
+              {!isToday(selectedDay) && selectedDay < getTodayIndex() && (
+                <button
+                  className="revive-btn"
+                  onClick={() => handleReviveStreak(habit)}
+                  title="Revive streak for 10 Leaf Dollars"
+                >
+                  💚 10🍃
+                </button>
+              )}
+            </div>
+          );
+        })}
 
         {habits.length === 0 && (
           <div className="empty-state">

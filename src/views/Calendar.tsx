@@ -1,39 +1,8 @@
 import React, { useState } from 'react';
 import './Calendar.css';
 import { useHabitLogs } from '../hooks/useHabitLogs';
+import { useHabits } from '../hooks/useHabits';
 import { getHabitLog, formatDate, isNumericHabitCompleted } from '../utils/habitLogsStore';
-
-interface CheckboxHabit {
-  id: number;
-  name: string;
-  type: 'checkbox';
-  color: string;
-  completed: boolean;
-  streak: number;
-}
-
-interface NumericHabit {
-  id: number;
-  name: string;
-  type: 'numeric';
-  target: number;
-  unit: string;
-  color: string;
-  currentValue: number;
-  streak: number;
-}
-
-type Habit = CheckboxHabit | NumericHabit;
-
-// Same habits as MainMenu
-const MOCK_HABITS: Habit[] = [
-  { id: 1, name: 'Morning Exercise', type: 'checkbox', color: '#6ab04c', completed: false, streak: 5 },
-  { id: 2, name: 'Read 30 pages', type: 'checkbox', color: '#4a7c59', completed: false, streak: 3 },
-  { id: 3, name: 'Meditate', type: 'checkbox', color: '#00b894', completed: false, streak: 7 },
-  { id: 4, name: 'Walk 5km', type: 'numeric', target: 5, unit: 'km', color: '#fdcb6e', currentValue: 0, streak: 2 },
-  { id: 5, name: 'Drink Water', type: 'numeric', target: 8, unit: 'glasses', color: '#74b9ff', currentValue: 0, streak: 10 },
-  { id: 6, name: 'Quit Smoking', type: 'checkbox', color: '#d63031', completed: false, streak: 14 },
-];
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -42,9 +11,10 @@ const MONTHS = [
 
 const Calendar: React.FC = () => {
   const currentDate = new Date();
+  const habits = useHabits(); // Get habits from store
   useHabitLogs(); // Reactive habit logs from shared store - triggers re-render on changes
 
-  const [selectedHabit, setSelectedHabit] = useState<number>(MOCK_HABITS[0].id);
+  const [selectedHabit, setSelectedHabit] = useState<string>(habits.length > 0 ? habits[0].id : '');
   const [selectedMonth, setSelectedMonth] = useState<number>(currentDate.getMonth());
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
 
@@ -62,7 +32,7 @@ const Calendar: React.FC = () => {
   const firstDayOfMonth = new Date(selectedYear, selectedMonth, 1).getDay();
   const adjustedFirstDay = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1; // Monday = 0
 
-  const selectedHabitData = MOCK_HABITS.find(h => h.id === selectedHabit);
+  const selectedHabitData = habits.find(h => h.id === selectedHabit);
 
   // Calculate stats based on actual logs up to TODAY only
   const calculateStats = () => {
@@ -88,14 +58,14 @@ const Calendar: React.FC = () => {
 
       if (log) {
         // If numeric habit, check if ≥50% completed
-        if (selectedHabitData?.type === 'numeric') {
-          if (log.value !== undefined && isNumericHabitCompleted(log.value, selectedHabitData.target)) {
+        if (selectedHabitData?.trackingType === 'variable_amount') {
+          if (log.value !== undefined && selectedHabitData.target_amount && isNumericHabitCompleted(log.value, selectedHabitData.target_amount)) {
             completedDays++;
           } else {
             missedDays++;
           }
         } else {
-          // Checkbox habit
+          // Checkbox or quit habit
           if (log.completed) {
             completedDays++;
           } else {
@@ -157,9 +127,9 @@ const Calendar: React.FC = () => {
 
     let isCompleted = false;
     if (log && selectedHabitData) {
-      if (selectedHabitData.type === 'numeric') {
+      if (selectedHabitData.trackingType === 'variable_amount') {
         // Check if ≥50% of target
-        isCompleted = log.value !== undefined && isNumericHabitCompleted(log.value, selectedHabitData.target);
+        isCompleted = log.value !== undefined && selectedHabitData.target_amount !== undefined && isNumericHabitCompleted(log.value, selectedHabitData.target_amount);
       } else {
         isCompleted = log.completed;
       }
@@ -198,13 +168,13 @@ const Calendar: React.FC = () => {
           <select
             id="habit-select"
             value={selectedHabit}
-            onChange={(e) => setSelectedHabit(Number(e.target.value))}
+            onChange={(e) => setSelectedHabit(e.target.value)}
             className="habit-dropdown"
             style={{ borderColor: selectedHabitData?.color }}
           >
-            {MOCK_HABITS.map(habit => (
+            {habits.map(habit => (
               <option key={habit.id} value={habit.id}>
-                {habit.name}
+                {habit.emoji} {habit.label}
               </option>
             ))}
           </select>

@@ -1,12 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './TreeCharacter.css';
 import { getLeafDollars, setLeafDollars } from '../utils/leafDollarsStorage';
-
-interface Habit {
-  id: number;
-  name: string;
-  progress: number;
-}
+import { useHabits } from '../hooks/useHabits';
+import { getHabitLogs } from '../utils/habitLogsStore';
 
 interface Character {
   id: number;
@@ -15,13 +11,6 @@ interface Character {
   unlocked: boolean;
   cost: number;
 }
-
-// Mock data
-const MOCK_HABITS: Habit[] = [
-  { id: 1, name: 'Morning Exercise', progress: 75 },
-  { id: 2, name: 'Read 30 pages', progress: 60 },
-  { id: 3, name: 'Meditate', progress: 90 },
-];
 
 const MOCK_CHARACTERS: Character[] = [
   { id: 1, name: 'Forest Fox', emoji: '🦊', unlocked: true, cost: 0 },
@@ -33,7 +22,8 @@ const MOCK_CHARACTERS: Character[] = [
 ];
 
 const TreeCharacter: React.FC = () => {
-  const [selectedHabit, setSelectedHabit] = useState<number>(MOCK_HABITS[0].id);
+  const habits = useHabits();
+  const [selectedHabit, setSelectedHabit] = useState<string>(habits.length > 0 ? habits[0].id : '');
   const [selectedCharacter, setSelectedCharacter] = useState<number>(() => {
     const stored = localStorage.getItem('selectedCharacter');
     return stored ? parseInt(stored) : MOCK_CHARACTERS[0].id;
@@ -54,7 +44,20 @@ const TreeCharacter: React.FC = () => {
     localStorage.setItem('selectedCharacter', characterId.toString());
   };
 
-  const currentHabit = MOCK_HABITS.find(h => h.id === selectedHabit);
+  // Calculate progress for selected habit
+  const calculateProgress = (habitId: string): number => {
+    const habit = habits.find(h => h.id === habitId);
+    if (!habit) return 0;
+
+    const logs = getHabitLogs().filter(log => String(log.habitId) === String(habitId) && log.completed);
+    const totalDays = habit.duration_days;
+
+    if (totalDays === 0) return 0;
+    return Math.min(100, Math.round((logs.length / totalDays) * 100));
+  };
+
+  const currentHabit = habits.find(h => h.id === selectedHabit);
+  const currentProgress = selectedHabit ? calculateProgress(selectedHabit) : 0;
   const currentCharacter = characters.find(c => c.id === selectedCharacter);
   const unlockedCharacters = characters.filter(c => c.unlocked);
 
@@ -82,12 +85,12 @@ const TreeCharacter: React.FC = () => {
           <select
             id="habit-select"
             value={selectedHabit}
-            onChange={(e) => setSelectedHabit(Number(e.target.value))}
+            onChange={(e) => setSelectedHabit(e.target.value)}
             className="control-dropdown"
           >
-            {MOCK_HABITS.map(habit => (
+            {habits.map(habit => (
               <option key={habit.id} value={habit.id}>
-                {habit.name}
+                {habit.emoji} {habit.label}
               </option>
             ))}
           </select>
@@ -120,10 +123,10 @@ const TreeCharacter: React.FC = () => {
               <div className="tree-growth-bar">
                 <div
                   className="tree-growth-fill"
-                  style={{ width: `${currentHabit?.progress || 0}%` }}
+                  style={{ width: `${currentProgress}%` }}
                 ></div>
               </div>
-              <p className="tree-progress-text">{currentHabit?.progress}% grown</p>
+              <p className="tree-progress-text">{currentProgress}% grown</p>
             </div>
           </div>
 
@@ -140,11 +143,11 @@ const TreeCharacter: React.FC = () => {
         <div className="progress-info">
           <div className="info-card">
             <span className="info-label">Current Quest</span>
-            <span className="info-value">{currentHabit?.name}</span>
+            <span className="info-value">{currentHabit?.label}</span>
           </div>
           <div className="info-card">
             <span className="info-label">Tree Growth</span>
-            <span className="info-value">{currentHabit?.progress}%</span>
+            <span className="info-value">{currentProgress}%</span>
           </div>
         </div>
       </div>
