@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './TreeCharacter.css';
+import { getLeafDollars, setLeafDollars } from '../utils/leafDollarsStorage';
 
 interface Habit {
   id: number;
@@ -33,18 +34,35 @@ const MOCK_CHARACTERS: Character[] = [
 
 const TreeCharacter: React.FC = () => {
   const [selectedHabit, setSelectedHabit] = useState<number>(MOCK_HABITS[0].id);
-  const [selectedCharacter, setSelectedCharacter] = useState<number>(MOCK_CHARACTERS[0].id);
+  const [selectedCharacter, setSelectedCharacter] = useState<number>(() => {
+    const stored = localStorage.getItem('selectedCharacter');
+    return stored ? parseInt(stored) : MOCK_CHARACTERS[0].id;
+  });
   const [showShop, setShowShop] = useState<boolean>(false);
-  const [leafDollars, setLeafDollars] = useState<number>(1250);
+  const [leafDollarsState, setLeafDollarsState] = useState<number>(getLeafDollars());
   const [characters, setCharacters] = useState<Character[]>(MOCK_CHARACTERS);
+
+  // Sync leaf dollars with global storage
+  useEffect(() => {
+    const storedLeafDollars = getLeafDollars();
+    setLeafDollarsState(storedLeafDollars);
+  }, []);
+
+  // Persist selected character to localStorage
+  const handleCharacterChange = (characterId: number) => {
+    setSelectedCharacter(characterId);
+    localStorage.setItem('selectedCharacter', characterId.toString());
+  };
 
   const currentHabit = MOCK_HABITS.find(h => h.id === selectedHabit);
   const currentCharacter = characters.find(c => c.id === selectedCharacter);
   const unlockedCharacters = characters.filter(c => c.unlocked);
 
   const handlePurchaseCharacter = (characterId: number, cost: number): void => {
-    if (leafDollars >= cost) {
-      setLeafDollars(leafDollars - cost);
+    if (leafDollarsState >= cost) {
+      const newBalance = leafDollarsState - cost;
+      setLeafDollars(newBalance);
+      setLeafDollarsState(newBalance);
       setCharacters(characters.map(c =>
         c.id === characterId ? { ...c, unlocked: true } : c
       ));
@@ -80,7 +98,7 @@ const TreeCharacter: React.FC = () => {
           <select
             id="character-select"
             value={selectedCharacter}
-            onChange={(e) => setSelectedCharacter(Number(e.target.value))}
+            onChange={(e) => handleCharacterChange(Number(e.target.value))}
             className="control-dropdown"
           >
             {unlockedCharacters.map(character => (
@@ -135,7 +153,7 @@ const TreeCharacter: React.FC = () => {
       <div className="bottom-controls">
         <div className="leaf-dollars-display">
           <span className="leaf-icon">🍃</span>
-          <span className="leaf-amount">{leafDollars.toLocaleString()}</span>
+          <span className="leaf-amount">{leafDollarsState.toLocaleString()}</span>
           <span className="leaf-label">Leaf Dollars</span>
         </div>
 
@@ -157,7 +175,7 @@ const TreeCharacter: React.FC = () => {
 
             <div className="shop-balance">
               <span className="leaf-icon">🍃</span>
-              <span>{leafDollars.toLocaleString()} Leaf Dollars</span>
+              <span>{leafDollarsState.toLocaleString()} Leaf Dollars</span>
             </div>
 
             <div className="shop-items">
@@ -179,7 +197,7 @@ const TreeCharacter: React.FC = () => {
                     <button
                       className="btn btn-primary buy-btn"
                       onClick={() => handlePurchaseCharacter(character.id, character.cost)}
-                      disabled={leafDollars < character.cost}
+                      disabled={leafDollarsState < character.cost}
                     >
                       Buy
                     </button>

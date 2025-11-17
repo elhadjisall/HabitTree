@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './MainMenu.css';
+import { getLeafDollars, addLeafDollars, subtractLeafDollars } from '../utils/leafDollarsStorage';
 
 const WEEKDAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 
@@ -57,6 +58,7 @@ const MainMenu: React.FC = () => {
   const [showSpeechBubble, setShowSpeechBubble] = useState<boolean>(false);
   const [currentMessage, setCurrentMessage] = useState<string>('');
   const [completedHabitId, setCompletedHabitId] = useState<number | null>(null);
+  const [leafDollars, setLeafDollarsState] = useState<number>(getLeafDollars());
 
   // Get selected character from localStorage (same as TreeCharacter component)
   const getSelectedCharacter = (): string => {
@@ -110,6 +112,9 @@ const MainMenu: React.FC = () => {
         if (newCompleted) {
           setCompletedHabitId(id);
           setTimeout(() => setCompletedHabitId(null), 600);
+          // Award +1 leaf dollar for completing the habit
+          const newBalance = addLeafDollars(1);
+          setLeafDollarsState(newBalance);
         }
         return {
           ...habit,
@@ -131,6 +136,9 @@ const MainMenu: React.FC = () => {
         if (!wasCompleted && isNowCompleted) {
           setCompletedHabitId(id);
           setTimeout(() => setCompletedHabitId(null), 600);
+          // Award +1 leaf dollar for completing the habit (≥50%)
+          const newBalance = addLeafDollars(1);
+          setLeafDollarsState(newBalance);
         }
         return {
           ...habit,
@@ -142,10 +150,50 @@ const MainMenu: React.FC = () => {
     }));
   };
 
+  const handleReviveStreak = (id: number): void => {
+    if (leafDollars < 10) {
+      alert('Not enough Leaf Dollars! You need 10 🍃 to revive a streak.');
+      return;
+    }
+
+    if (window.confirm('Revive this missed day for 10 Leaf Dollars? 🍃')) {
+      const newBalance = subtractLeafDollars(10);
+      setLeafDollarsState(newBalance);
+
+      setHabits(habits.map(habit => {
+        if (habit.id === id) {
+          if (habit.type === 'checkbox') {
+            return {
+              ...habit,
+              completed: true,
+              streak: habit.streak + 1
+            };
+          } else {
+            return {
+              ...habit,
+              currentValue: habit.target,
+              streak: habit.streak + 1
+            };
+          }
+        }
+        return habit;
+      }));
+
+      setCompletedHabitId(id);
+      setTimeout(() => setCompletedHabitId(null), 600);
+    }
+  };
+
   return (
     <div className="main-menu">
       <header className="menu-header">
-        <h1 className="quests-title">My Quests</h1>
+        <div className="header-left">
+          <h1 className="quests-title">My Quests</h1>
+          <div className="leaf-dollars-bubble">
+            <span className="leaf-icon">🍃</span>
+            <span className="leaf-amount">{leafDollars}</span>
+          </div>
+        </div>
         {isToday(selectedDay) && (
           <div className="avatar-container">
             {showSpeechBubble && (
@@ -221,6 +269,17 @@ const MainMenu: React.FC = () => {
                 />
                 <span className="numeric-target">/ {habit.target} {habit.unit}</span>
               </div>
+            )}
+
+            {/* Revive streak button for past days */}
+            {!isToday(selectedDay) && selectedDay < getTodayIndex() && (
+              <button
+                className="revive-btn"
+                onClick={() => handleReviveStreak(habit.id)}
+                title="Revive streak for 10 Leaf Dollars"
+              >
+                💚 10🍃
+              </button>
             )}
           </div>
         ))}

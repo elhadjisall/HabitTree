@@ -61,15 +61,19 @@ const Calendar: React.FC = () => {
   const currentYear = currentDate.getFullYear();
   const yearOptions = [currentYear - 1, currentYear, currentYear + 1];
 
-  const calendarData = generateMockCalendarData(selectedYear, selectedMonth);
+  // Determine if month has no data (all future or no habit started)
+  const monthHasNoData = selectedYear > currentYear ||
+                         (selectedYear === currentYear && selectedMonth > currentDate.getMonth());
+
+  const calendarData = monthHasNoData ? {} : generateMockCalendarData(selectedYear, selectedMonth);
   const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
   const firstDayOfMonth = new Date(selectedYear, selectedMonth, 1).getDay();
   const adjustedFirstDay = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1; // Monday = 0
 
   const selectedHabitData = MOCK_HABITS.find(h => h.id === selectedHabit);
 
-  const completedDays = Object.values(calendarData).filter(Boolean).length;
-  const completionRate = Math.round((completedDays / daysInMonth) * 100);
+  const completedDays = monthHasNoData ? 0 : Object.values(calendarData).filter(Boolean).length;
+  const completionRate = monthHasNoData ? 0 : Math.round((completedDays / daysInMonth) * 100);
 
   // Generate calendar grid
   const calendarDays: JSX.Element[] = [];

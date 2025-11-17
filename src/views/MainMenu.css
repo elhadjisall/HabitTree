@@ -12,6 +12,13 @@
   margin-bottom: var(--spacing-lg);
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
 .quests-title {
   margin: 0;
   color: white;
@@ -23,6 +30,28 @@
   box-shadow: 0 4px 12px rgba(106, 176, 76, 0.3);
   display: inline-block;
   letter-spacing: 0.5px;
+}
+
+.leaf-dollars-bubble {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  background: linear-gradient(135deg, #ffd700, #ffed4e);
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--radius-full);
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+  border: 2px solid #f0c800;
+}
+
+.leaf-dollars-bubble .leaf-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.leaf-dollars-bubble .leaf-amount {
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: #2d3436;
 }
 
 /* Avatar container */
@@ -213,6 +242,31 @@
   font-size: var(--font-size-sm);
 }
 
+/* Revive streak button */
+.revive-btn {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: linear-gradient(135deg, #00b894, #55efc4);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-sm);
+  white-space: nowrap;
+}
+
+.revive-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  background: linear-gradient(135deg, #00d2a0, #6cf5d0);
+}
+
+.revive-btn:active {
+  transform: translateY(0);
+}
+
 /* Completion animation */
 .habit-card.completed-animation {
   position: relative;
@@ -220,23 +274,25 @@
 }
 
 .habit-card.completed-animation::before {
-  content: '✨';
+  content: '🍃';
   position: absolute;
   font-size: 2rem;
   animation: sparkle1 0.6s ease-out;
   pointer-events: none;
   top: 10%;
   left: 10%;
+  filter: drop-shadow(0 0 8px rgba(106, 176, 76, 0.6));
 }
 
 .habit-card.completed-animation::after {
-  content: '⭐';
+  content: '🍃';
   position: absolute;
   font-size: 1.5rem;
   animation: sparkle2 0.6s ease-out;
   pointer-events: none;
   top: 15%;
   right: 15%;
+  filter: drop-shadow(0 0 8px rgba(106, 176, 76, 0.6));
 }
 
 @keyframes cardPulse {
