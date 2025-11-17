@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './MainMenu.css';
 import { getLeafDollars, addLeafDollars, subtractLeafDollars } from '../utils/leafDollarsStorage';
+import { updateHabitLog, getTodayDateString, formatDate, isNumericHabitCompleted, getHabitLog } from '../utils/habitLogsStore';
 
 const WEEKDAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 
@@ -78,6 +79,27 @@ const MainMenu: React.FC = () => {
     return character ? character.emoji : '🦊';
   };
 
+  // Load initial habit completion state from shared store
+  useEffect(() => {
+    const today = new Date();
+    const dayOffset = selectedDay - getTodayIndex();
+    const targetDate = new Date(today);
+    targetDate.setDate(today.getDate() + dayOffset);
+    const dateString = formatDate(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
+
+    setHabits(MOCK_HABITS.map(habit => {
+      const log = getHabitLog(habit.id, dateString);
+      if (log) {
+        if (habit.type === 'checkbox') {
+          return { ...habit, completed: log.completed };
+        } else {
+          return { ...habit, currentValue: log.value || 0 };
+        }
+      }
+      return habit;
+    }));
+  }, [selectedDay]);
+
   // Show motivational speech bubble every 5 seconds when viewing today
   useEffect(() => {
     if (!isToday(selectedDay)) {
@@ -109,6 +131,11 @@ const MainMenu: React.FC = () => {
     setHabits(habits.map(habit => {
       if (habit.id === id && isToday(selectedDay) && habit.type === 'checkbox') {
         const newCompleted = !habit.completed;
+
+        // Save to shared habit logs store
+        const dateString = getTodayDateString();
+        updateHabitLog(id, dateString, newCompleted);
+
         if (newCompleted) {
           setCompletedHabitId(id);
           setTimeout(() => setCompletedHabitId(null), 600);
@@ -131,8 +158,13 @@ const MainMenu: React.FC = () => {
       if (habit.id === id && isToday(selectedDay) && habit.type === 'numeric') {
         const newValue = Math.max(0, Number(value) || 0);
         const previousValue = habit.currentValue;
-        const wasCompleted = previousValue >= habit.target * 0.5;
-        const isNowCompleted = newValue >= habit.target * 0.5;
+        const wasCompleted = isNumericHabitCompleted(previousValue, habit.target);
+        const isNowCompleted = isNumericHabitCompleted(newValue, habit.target);
+
+        // Save to shared habit logs store
+        const dateString = getTodayDateString();
+        updateHabitLog(id, dateString, isNowCompleted, newValue);
+
         if (!wasCompleted && isNowCompleted) {
           setCompletedHabitId(id);
           setTimeout(() => setCompletedHabitId(null), 600);
@@ -160,15 +192,28 @@ const MainMenu: React.FC = () => {
       const newBalance = subtractLeafDollars(10);
       setLeafDollarsState(newBalance);
 
+      // Calculate the date for the selected past day
+      const today = new Date();
+      const dayOffset = selectedDay - getTodayIndex();
+      const targetDate = new Date(today);
+      targetDate.setDate(today.getDate() + dayOffset);
+      const dateString = formatDate(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
+
       setHabits(habits.map(habit => {
         if (habit.id === id) {
           if (habit.type === 'checkbox') {
+            // Save to shared habit logs store
+            updateHabitLog(id, dateString, true);
+
             return {
               ...habit,
               completed: true,
               streak: habit.streak + 1
             };
           } else {
+            // Save to shared habit logs store
+            updateHabitLog(id, dateString, true, habit.target);
+
             return {
               ...habit,
               currentValue: habit.target,

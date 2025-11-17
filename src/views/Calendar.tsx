@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import './Calendar.css';
+import { useHabitLogs } from '../hooks/useHabitLogs';
+import { getHabitLog, formatDate, isNumericHabitCompleted } from '../utils/habitLogsStore';
 
 interface CheckboxHabit {
   id: number;
@@ -38,42 +40,98 @@ const MONTHS = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
-// Generate mock calendar data
-const generateMockCalendarData = (year: number, month: number): Record<number, boolean> => {
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const data: Record<number, boolean> = {};
-
-  for (let day = 1; day <= daysInMonth; day++) {
-    // Randomly mark ~60% of days as completed
-    data[day] = Math.random() > 0.4;
-  }
-
-  return data;
-};
-
 const Calendar: React.FC = () => {
   const currentDate = new Date();
+  useHabitLogs(); // Reactive habit logs from shared store - triggers re-render on changes
+
   const [selectedHabit, setSelectedHabit] = useState<number>(MOCK_HABITS[0].id);
   const [selectedMonth, setSelectedMonth] = useState<number>(currentDate.getMonth());
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
 
   // Generate year options (previous, current, next year)
   const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth();
+  const today = currentDate.getDate();
   const yearOptions = [currentYear - 1, currentYear, currentYear + 1];
 
-  // Determine if month has no data (all future or no habit started)
+  // Determine if month has no data (all future)
   const monthHasNoData = selectedYear > currentYear ||
-                         (selectedYear === currentYear && selectedMonth > currentDate.getMonth());
+                         (selectedYear === currentYear && selectedMonth > currentMonth);
 
-  const calendarData = monthHasNoData ? {} : generateMockCalendarData(selectedYear, selectedMonth);
   const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
   const firstDayOfMonth = new Date(selectedYear, selectedMonth, 1).getDay();
   const adjustedFirstDay = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1; // Monday = 0
 
   const selectedHabitData = MOCK_HABITS.find(h => h.id === selectedHabit);
 
-  const completedDays = monthHasNoData ? 0 : Object.values(calendarData).filter(Boolean).length;
-  const completionRate = monthHasNoData ? 0 : Math.round((completedDays / daysInMonth) * 100);
+  // Calculate stats based on actual logs up to TODAY only
+  const calculateStats = () => {
+    if (monthHasNoData) {
+      return { completedDays: 0, missedDays: 0, completionRate: 0 };
+    }
+
+    // Determine how many days to count:
+    // - If viewing current month/year, count up to TODAY
+    // - If viewing past month/year, count ALL days in that month
+    let daysToCount = daysInMonth;
+    if (selectedYear === currentYear && selectedMonth === currentMonth) {
+      daysToCount = today; // Only count up to today
+    }
+
+    let completedDays = 0;
+    let missedDays = 0;
+
+    // Check each day up to daysToCount
+    for (let day = 1; day <= daysToCount; day++) {
+      const dateString = formatDate(selectedYear, selectedMonth, day);
+      const log = getHabitLog(selectedHabit, dateString);
+
+      if (log) {
+        // If numeric habit, check if ≥50% completed
+        if (selectedHabitData?.type === 'numeric') {
+          if (log.value !== undefined && isNumericHabitCompleted(log.value, selectedHabitData.target)) {
+            completedDays++;
+          } else {
+            missedDays++;
+          }
+        } else {
+          // Checkbox habit
+          if (log.completed) {
+            completedDays++;
+          } else {
+            missedDays++;
+          }
+        }
+      } else {
+        // No log = missed day
+        missedDays++;
+      }
+    }
+
+    const completionRate = daysToCount > 0 ? Math.round((completedDays / daysToCount) * 100) : 0;
+
+    return { completedDays, missedDays, completionRate };
+  };
+
+  const { completedDays, missedDays, completionRate } = calculateStats();
+
+  // Get selected character from localStorage
+  const getSelectedCharacter = (): string => {
+    const storedCharacterId = localStorage.getItem('selectedCharacter');
+    const characterId = storedCharacterId ? parseInt(storedCharacterId) : 1;
+
+    const characters = [
+      { id: 1, emoji: '🦊' },
+      { id: 2, emoji: '🦉' },
+      { id: 3, emoji: '🐰' },
+      { id: 4, emoji: '🦌' },
+      { id: 5, emoji: '🐢' },
+      { id: 6, emoji: '🐉' },
+    ];
+
+    const character = characters.find(c => c.id === characterId);
+    return character ? character.emoji : '🦊';
+  };
 
   // Generate calendar grid
   const calendarDays: JSX.Element[] = [];
@@ -85,18 +143,27 @@ const Calendar: React.FC = () => {
 
   // Actual days
   for (let day = 1; day <= daysInMonth; day++) {
-    const isCompleted = calendarData[day];
-    const isToday = day === currentDate.getDate() &&
-                    selectedMonth === currentDate.getMonth() &&
-                    selectedYear === currentDate.getFullYear();
+    const isToday = day === today &&
+                    selectedMonth === currentMonth &&
+                    selectedYear === currentYear;
 
     // Check if this day is in the future
     const dayDate = new Date(selectedYear, selectedMonth, day);
     const isFuture = dayDate > currentDate;
 
-    // Determine if month has no data (all future or no habit started)
-    const monthHasNoData = selectedYear > currentYear ||
-                           (selectedYear === currentYear && selectedMonth > currentDate.getMonth());
+    // Get log for this day from shared store
+    const dateString = formatDate(selectedYear, selectedMonth, day);
+    const log = getHabitLog(selectedHabit, dateString);
+
+    let isCompleted = false;
+    if (log && selectedHabitData) {
+      if (selectedHabitData.type === 'numeric') {
+        // Check if ≥50% of target
+        isCompleted = log.value !== undefined && isNumericHabitCompleted(log.value, selectedHabitData.target);
+      } else {
+        isCompleted = log.completed;
+      }
+    }
 
     calendarDays.push(
       <div
@@ -203,7 +270,7 @@ const Calendar: React.FC = () => {
         <div className="summary-stat-card">
           <div className="stat-icon">📅</div>
           <div className="stat-content">
-            <span className="stat-value">{daysInMonth - completedDays}</span>
+            <span className="stat-value">{missedDays}</span>
             <span className="stat-label">Days Missed</span>
           </div>
         </div>
@@ -216,12 +283,19 @@ const Calendar: React.FC = () => {
           </div>
         </div>
 
-        <div className="summary-progress-card">
-          <div className="progress-bar">
-            <div className="progress-fill" style={{ width: `${completionRate}%` }}></div>
+        {/* Enhanced progress bar with character */}
+        <div className="summary-progress-card-new">
+          <div className="progress-container">
+            <div className="character-progress-avatar">{getSelectedCharacter()}</div>
+            <div className="progress-bar-new">
+              <div
+                className="progress-fill-new"
+                style={{ width: `${completionRate}%` }}
+              ></div>
+            </div>
           </div>
-          <p className="progress-text">
-            {completedDays} / {daysInMonth} days completed
+          <p className="progress-text-new">
+            {completedDays} / {monthHasNoData ? 0 : (selectedYear === currentYear && selectedMonth === currentMonth ? today : daysInMonth)} days completed
           </p>
         </div>
       </div>
