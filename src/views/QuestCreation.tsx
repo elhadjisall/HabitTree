@@ -24,8 +24,16 @@ const PRESET_QUESTS: PresetQuest[] = [
   { name: 'Learn Language', emoji: '🌍', color: '#e17055', trackingType: 'variable_amount', defaultTarget: 15, defaultUnit: 'minutes' },
 ];
 
-// Available emojis for custom quests
-const EMOJI_OPTIONS = ['🏃', '💪', '📚', '🧘', '💧', '😴', '📱', '✍️', '🌍', '🎯', '🌱', '🔥', '⭐', '🎨', '🎵', '🍎', '🚴', '🏊', '🧠', '💻', '📝', '🎓', '☕', '🌟'];
+// Available emojis for custom quests (60+ options)
+const EMOJI_OPTIONS = [
+  '🏃', '💪', '📚', '🧘', '💧', '😴', '📱', '✍️', '🌍', '🎯',
+  '🌱', '🔥', '⭐', '🎨', '🎵', '🍎', '🚴', '🏊', '🧠', '💻',
+  '📝', '🎓', '☕', '🌟', '🏃‍♂️', '🏃‍♀️', '🧘‍♀️', '🧘‍♂️', '📖', '🥤',
+  '🛌', '⚽', '🎧', '🧹', '🌿', '🍽️', '📈', '🗓️', '✨', '🕒',
+  '🔒', '🌾', '🥗', '💭', '📦', '🛀', '🚿', '🚰', '📵', '🎮',
+  '🏋️', '🤸', '🚶', '🧗', '🤾', '🏌️', '🧖', '💆', '🍵', '🥛',
+  '🥕', '🥦', '🍓', '🥑', '🌻', '🌺', '🍃', '🌲', '🏞️', '⛰️'
+];
 
 interface QuestFormState {
   isPreset: boolean;
@@ -149,7 +157,7 @@ const QuestCreation: React.FC = () => {
 
   return (
     <div className="quest-creation">
-      {!showForm && !showConfirmation && (
+      {!showForm && (
         <>
           <header className="creation-header">
             <h1 className="journey-title">Start your Journey</h1>
