@@ -1,0 +1,102 @@
+.confirm-modal {
+  max-width: 420px;
+  text-align: center;
+}
+
+.confirm-icon {
+  font-size: 3.5rem;
+  margin-bottom: var(--spacing-lg);
+  animation: bounceIn 0.5s ease-out;
+}
+
+@keyframes bounceIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.confirm-title {
+  margin: 0 0 var(--spacing-md);
+  color: var(--fg-primary);
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+}
+
+.confirm-message {
+  color: var(--fg-secondary);
+  margin-bottom: var(--spacing-xl);
+  line-height: 1.6;
+  font-size: var(--font-size-base);
+}
+
+.confirm-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+}
+
+.confirm-actions .btn {
+  flex: 1;
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-weight: 600;
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-base);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.confirm-btn {
+  background: linear-gradient(135deg, #6ab04c, #5a9a3c);
+  color: white;
+  border: none;
+}
+
+.confirm-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(106, 176, 76, 0.3);
+}
+
+.cancel-btn {
+  background: var(--bg-tertiary);
+  color: var(--fg-primary);
+  border: 2px solid var(--border-color);
+}
+
+.cancel-btn:hover {
+  background: var(--bg-secondary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Type-specific styles */
+.confirm-modal-warning .confirm-btn {
+  background: linear-gradient(135deg, #fdcb6e, #f39c12);
+}
+
+.confirm-modal-warning .confirm-btn:hover {
+  box-shadow: 0 4px 12px rgba(253, 203, 110, 0.3);
+}
+
+.confirm-modal-error .confirm-btn {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+}
+
+.confirm-modal-error .confirm-btn:hover {
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+
+.confirm-modal-success .confirm-btn {
+  background: linear-gradient(135deg, #00b894, #00a884);
+}
+
+.confirm-modal-success .confirm-btn:hover {
+  box-shadow: 0 4px 12px rgba(0, 184, 148, 0.3);
+}

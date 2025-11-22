@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import BottomNav from './components/BottomNav';
 import MainMenu from './views/MainMenu';
@@ -6,10 +5,12 @@ import Calendar from './views/Calendar';
 import QuestCreation from './views/QuestCreation';
 import TreeCharacter from './views/TreeCharacter';
 import Settings from './views/Settings';
+import Friends from './views/Friends';
+import FriendProfile from './views/FriendProfile';
 import './styles/global.css';
 import './App.css';
 
-function App(): JSX.Element {
+function App() {
   return (
     <Router>
       <div className="app">
@@ -19,6 +20,8 @@ function App(): JSX.Element {
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/create" element={<QuestCreation />} />
             <Route path="/tree" element={<TreeCharacter />} />
+            <Route path="/friends" element={<Friends />} />
+            <Route path="/friends/profile/:username" element={<FriendProfile />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </main>

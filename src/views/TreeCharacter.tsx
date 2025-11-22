@@ -12,7 +12,7 @@ interface Character {
   cost: number;
 }
 
-const MOCK_CHARACTERS: Character[] = [
+const BASE_CHARACTERS: Character[] = [
   { id: 1, name: 'Forest Fox', emoji: '🦊', unlocked: true, cost: 0 },
   { id: 2, name: 'Wise Owl', emoji: '🦉', unlocked: true, cost: 0 },
   { id: 3, name: 'Garden Rabbit', emoji: '🐰', unlocked: false, cost: 500 },
@@ -21,16 +21,37 @@ const MOCK_CHARACTERS: Character[] = [
   { id: 6, name: 'Sky Dragon', emoji: '🐉', unlocked: false, cost: 2000 },
 ];
 
+const UNLOCKED_CHARACTERS_KEY = 'unlockedCharacters';
+
+// Load unlocked characters from localStorage
+const loadUnlockedCharacters = (): Character[] => {
+  const stored = localStorage.getItem(UNLOCKED_CHARACTERS_KEY);
+  if (stored) {
+    const unlockedIds = JSON.parse(stored) as number[];
+    return BASE_CHARACTERS.map(char => ({
+      ...char,
+      unlocked: char.unlocked || unlockedIds.includes(char.id)
+    }));
+  }
+  return BASE_CHARACTERS;
+};
+
+// Save unlocked characters to localStorage
+const saveUnlockedCharacters = (characters: Character[]): void => {
+  const unlockedIds = characters.filter(c => c.unlocked && c.cost > 0).map(c => c.id);
+  localStorage.setItem(UNLOCKED_CHARACTERS_KEY, JSON.stringify(unlockedIds));
+};
+
 const TreeCharacter: React.FC = () => {
   const habits = useHabits();
   const [selectedHabit, setSelectedHabit] = useState<string>(habits.length > 0 ? habits[0].id : '');
   const [selectedCharacter, setSelectedCharacter] = useState<number>(() => {
     const stored = localStorage.getItem('selectedCharacter');
-    return stored ? parseInt(stored) : MOCK_CHARACTERS[0].id;
+    return stored ? parseInt(stored) : BASE_CHARACTERS[0].id;
   });
   const [showShop, setShowShop] = useState<boolean>(false);
   const [leafDollarsState, setLeafDollarsState] = useState<number>(getLeafDollars());
-  const [characters, setCharacters] = useState<Character[]>(MOCK_CHARACTERS);
+  const [characters, setCharacters] = useState<Character[]>(loadUnlockedCharacters());
 
   // Sync leaf dollars with global storage
   useEffect(() => {
@@ -66,9 +87,11 @@ const TreeCharacter: React.FC = () => {
       const newBalance = leafDollarsState - cost;
       setLeafDollars(newBalance);
       setLeafDollarsState(newBalance);
-      setCharacters(characters.map(c =>
+      const updatedCharacters = characters.map(c =>
         c.id === characterId ? { ...c, unlocked: true } : c
-      ));
+      );
+      setCharacters(updatedCharacters);
+      saveUnlockedCharacters(updatedCharacters); // Persist to localStorage
       alert('Character unlocked! 🎉');
       setShowShop(false);
     } else {
@@ -81,7 +104,7 @@ const TreeCharacter: React.FC = () => {
       {/* Top controls */}
       <div className="top-controls">
         <div className="dropdown-group">
-          <label htmlFor="habit-select">Habit Tree:</label>
+          <label htmlFor="habit-select">Quest:</label>
           <select
             id="habit-select"
             value={selectedHabit}
@@ -97,7 +120,7 @@ const TreeCharacter: React.FC = () => {
         </div>
 
         <div className="dropdown-group">
-          <label htmlFor="character-select">Character:</label>
+          <label htmlFor="character-select">Companion:</label>
           <select
             id="character-select"
             value={selectedCharacter}
@@ -115,26 +138,33 @@ const TreeCharacter: React.FC = () => {
 
       {/* Main visualization area */}
       <div className="visualization-area">
-        <div className="nature-background">
-          {/* Tree placeholder */}
-          <div className="tree-container">
-            <div className="tree-placeholder">
-              <div className="tree-emoji">🌳</div>
-              <div className="tree-growth-bar">
-                <div
-                  className="tree-growth-fill"
-                  style={{ width: `${currentProgress}%` }}
-                ></div>
+        <div className="forest-background">
+          {/* Sky/trees at top, soil at bottom */}
+          <div className="forest-sky"></div>
+          <div className="forest-soil">
+            {/* Horizontal layout: Tree and Character side by side */}
+            <div className="horizontal-scene">
+              {/* Tree on the left */}
+              <div className="tree-container">
+                <div className="tree-placeholder">
+                  <div className="tree-emoji">🌳</div>
+                  <div className="tree-growth-bar">
+                    <div
+                      className="tree-growth-fill"
+                      style={{ width: `${currentProgress}%` }}
+                    ></div>
+                  </div>
+                  <p className="tree-progress-text">{currentProgress}% grown</p>
+                </div>
               </div>
-              <p className="tree-progress-text">{currentProgress}% grown</p>
-            </div>
-          </div>
 
-          {/* Character placeholder */}
-          <div className="character-container">
-            <div className="character-placeholder">
-              <div className="character-emoji">{currentCharacter?.emoji}</div>
-              <p className="character-name">{currentCharacter?.name}</p>
+              {/* Character on the right */}
+              <div className="character-container">
+                <div className="character-placeholder">
+                  <div className="character-emoji">{currentCharacter?.emoji}</div>
+                  <p className="character-name">{currentCharacter?.name}</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

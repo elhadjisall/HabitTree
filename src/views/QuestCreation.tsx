@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './QuestCreation.css';
-import { addHabit, type Frequency, type TrackingType } from '../utils/habitsStore';
+import { addHabit, type TrackingType } from '../utils/habitsStore';
 
 interface PresetQuest {
   name: string;
@@ -41,7 +41,6 @@ interface QuestFormState {
   label: string;
   emoji: string;
   color: string;
-  frequency: Frequency;
   duration: number;
   trackingType: TrackingType;
   targetAmount: number;
@@ -60,7 +59,6 @@ const QuestCreation: React.FC = () => {
     label: '',
     emoji: '🎯',
     color: '#6ab04c',
-    frequency: 'daily',
     duration: 30,
     trackingType: 'tick_cross',
     targetAmount: 0,
@@ -74,7 +72,6 @@ const QuestCreation: React.FC = () => {
       label: preset.name,
       emoji: preset.emoji,
       color: preset.color,
-      frequency: 'daily',
       duration: 30,
       trackingType: preset.trackingType,
       targetAmount: preset.defaultTarget || 0,
@@ -90,7 +87,6 @@ const QuestCreation: React.FC = () => {
       label: '',
       emoji: '🎯',
       color: '#6ab04c',
-      frequency: 'daily',
       duration: 30,
       trackingType: 'tick_cross',
       targetAmount: 0,
@@ -117,7 +113,6 @@ const QuestCreation: React.FC = () => {
       label: quest.label,
       emoji: quest.emoji,
       color: quest.color,
-      frequency: quest.frequency,
       duration_days: quest.duration,
       trackingType: quest.trackingType,
       target_amount: quest.trackingType === 'variable_amount' ? quest.targetAmount : undefined,
@@ -138,21 +133,11 @@ const QuestCreation: React.FC = () => {
       label: '',
       emoji: '🎯',
       color: '#6ab04c',
-      frequency: 'daily',
       duration: 30,
       trackingType: 'tick_cross',
       targetAmount: 0,
       unit: '',
     });
-  };
-
-  const getDurationLabel = (): string => {
-    switch (quest.frequency) {
-      case 'daily': return 'Duration (days)';
-      case 'weekly': return 'Duration (weeks)';
-      case 'monthly': return 'Duration (months)';
-      default: return 'Duration';
-    }
   };
 
   return (
@@ -258,32 +243,17 @@ const QuestCreation: React.FC = () => {
               />
             </div>
 
-            {/* Quest Period & Duration */}
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="quest-period">Quest Period</label>
-                <select
-                  id="quest-period"
-                  value={quest.frequency}
-                  onChange={(e) => setQuest({ ...quest, frequency: e.target.value as Frequency })}
-                >
-                  <option value="daily">Daily</option>
-                  <option value="weekly">Weekly</option>
-                  <option value="monthly">Monthly</option>
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="quest-duration">{getDurationLabel()}</label>
-                <input
-                  id="quest-duration"
-                  type="number"
-                  min="1"
-                  max="365"
-                  value={quest.duration}
-                  onChange={(e) => setQuest({ ...quest, duration: Number(e.target.value) })}
-                />
-              </div>
+            {/* Quest Duration */}
+            <div className="form-group">
+              <label htmlFor="quest-duration">Duration (days)</label>
+              <input
+                id="quest-duration"
+                type="number"
+                min="1"
+                max="365"
+                value={quest.duration}
+                onChange={(e) => setQuest({ ...quest, duration: Number(e.target.value) })}
+              />
             </div>
 
             {/* Quest Type */}

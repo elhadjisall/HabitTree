@@ -32,12 +32,12 @@ const BottomNav: React.FC = () => {
       </NavLink>
 
       <NavLink
-        to="/tree"
+        to="/friends"
         className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}
-        aria-label="Tree & Character"
+        aria-label="Friends"
       >
-        <div className="nav-icon">🌳</div>
-        <span className="nav-label">Tree</span>
+        <div className="nav-icon">👤</div>
+        <span className="nav-label">Friends</span>
       </NavLink>
 
       <NavLink

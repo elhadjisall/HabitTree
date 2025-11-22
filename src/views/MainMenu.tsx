@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './MainMenu.css';
 import { getLeafDollars, addLeafDollars, subtractLeafDollars } from '../utils/leafDollarsStorage';
-import { updateHabitLog, getTodayDateString, formatDate, isNumericHabitCompleted, getHabitLog } from '../utils/habitLogsStore';
+import { updateHabitLog, getTodayDateString, formatDate, getHabitLog, getHabitLogs, setHabitLogs } from '../utils/habitLogsStore';
 import { useHabits } from '../hooks/useHabits';
 import { calculateStreak } from '../utils/streakCalculation';
-import type { Habit } from '../utils/habitsStore';
+import { deleteHabit, type Habit } from '../utils/habitsStore';
+import ConfirmModal from '../components/ConfirmModal';
 
 const WEEKDAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 
@@ -26,6 +28,8 @@ interface HabitUIState {
 }
 
 const MainMenu: React.FC = () => {
+  const navigate = useNavigate();
+
   const getTodayIndex = (): number => {
     const day = new Date().getDay();
     return day === 0 ? 6 : day - 1; // Convert Sunday (0) to 6, Monday (1) to 0, etc.
@@ -38,6 +42,15 @@ const MainMenu: React.FC = () => {
   const [currentMessage, setCurrentMessage] = useState<string>('');
   const [completedHabitId, setCompletedHabitId] = useState<string | null>(null);
   const [leafDollars, setLeafDollarsState] = useState<number>(getLeafDollars());
+  const [showHabitDetails, setShowHabitDetails] = useState<boolean>(false);
+  const [selectedHabitForDetails, setSelectedHabitForDetails] = useState<Habit | null>(null);
+  const longPressTimer = useRef<number | null>(null);
+
+  // Confirmation modals
+  const [deleteConfirmModal, setDeleteConfirmModal] = useState<{ isOpen: boolean; habitId: string | null }>({ isOpen: false, habitId: null });
+  const [reviveConfirmModal, setReviveConfirmModal] = useState<{ isOpen: boolean; habit: Habit | null }>({ isOpen: false, habit: null });
+  const [notEnoughLeafModal, setNotEnoughLeafModal] = useState<boolean>(false);
+  const [reviveSuccessModal, setReviveSuccessModal] = useState<boolean>(false);
 
   // Get selected character from localStorage
   const getSelectedCharacter = (): string => {
@@ -134,8 +147,8 @@ const MainMenu: React.FC = () => {
 
     const newValue = Math.max(0, Number(value) || 0);
     const previousValue = habitStates[habit.id]?.currentValue || 0;
-    const wasCompleted = habit.target_amount !== undefined && isNumericHabitCompleted(previousValue, habit.target_amount);
-    const isNowCompleted = habit.target_amount !== undefined && isNumericHabitCompleted(newValue, habit.target_amount);
+    const wasCompleted = habit.target_amount !== undefined && previousValue >= habit.target_amount;
+    const isNowCompleted = habit.target_amount !== undefined && newValue >= habit.target_amount;
 
     // Save to shared habit logs store
     const dateString = getTodayDateString();
@@ -193,14 +206,120 @@ const MainMenu: React.FC = () => {
     }
   };
 
+  // Long press handlers
+  const handleLongPressStart = (habit: Habit): void => {
+    longPressTimer.current = window.setTimeout(() => {
+      setSelectedHabitForDetails(habit);
+      setShowHabitDetails(true);
+    }, 500); // 500ms for long press
+  };
+
+  const handleLongPressEnd = (): void => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+
+  const handleDeleteHabit = (habitId: string): void => {
+    setDeleteConfirmModal({ isOpen: true, habitId });
+  };
+
+  const confirmDeleteHabit = (): void => {
+    if (deleteConfirmModal.habitId) {
+      // Delete habit from store
+      deleteHabit(deleteConfirmModal.habitId);
+
+      // Delete all logs for this habit
+      const allLogs = getHabitLogs();
+      const filteredLogs = allLogs.filter(log => String(log.habitId) !== String(deleteConfirmModal.habitId));
+      setHabitLogs(filteredLogs);
+
+      setShowHabitDetails(false);
+      setSelectedHabitForDetails(null);
+      setDeleteConfirmModal({ isOpen: false, habitId: null });
+    }
+  };
+
+  const handleReviveYesterday = (habit: Habit): void => {
+    if (leafDollars < 10) {
+      setNotEnoughLeafModal(true);
+      return;
+    }
+
+    // Calculate yesterday's date
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayString = formatDate(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
+
+    // Check if yesterday was already completed
+    const yesterdayLog = getHabitLog(habit.id, yesterdayString);
+    if (yesterdayLog?.completed) {
+      return; // Already completed, button shouldn't show
+    }
+
+    setReviveConfirmModal({ isOpen: true, habit });
+  };
+
+  const confirmReviveYesterday = (): void => {
+    if (reviveConfirmModal.habit) {
+      const habit = reviveConfirmModal.habit;
+      const newBalance = subtractLeafDollars(10);
+      setLeafDollarsState(newBalance);
+
+      // Calculate yesterday's date
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayString = formatDate(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
+
+      // Mark yesterday as completed
+      if (habit.trackingType === 'variable_amount' && habit.target_amount) {
+        updateHabitLog(habit.id, yesterdayString, true, habit.target_amount);
+      } else {
+        updateHabitLog(habit.id, yesterdayString, true);
+      }
+
+      setReviveConfirmModal({ isOpen: false, habit: null });
+      setReviveSuccessModal(true);
+    }
+  };
+
+  // Calculate days left for a habit
+  const getDaysLeft = (habit: Habit): number => {
+    const createdDate = new Date(habit.createdAt);
+    const today = new Date();
+    const daysPassed = Math.floor((today.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
+    return Math.max(0, habit.duration_days - daysPassed);
+  };
+
+  // Check if yesterday is eligible for revival
+  const canReviveYesterday = (habit: Habit): boolean => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayString = formatDate(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
+    const yesterdayLog = getHabitLog(habit.id, yesterdayString);
+
+    // Can revive if yesterday was not completed
+    return !yesterdayLog?.completed;
+  };
+
   return (
     <div className="main-menu">
       <header className="menu-header">
         <div className="header-left">
           <h1 className="quests-title">My Quests</h1>
-          <div className="leaf-dollars-bubble">
-            <span className="leaf-icon">🍃</span>
-            <span className="leaf-amount">{leafDollars}</span>
+          <div className="header-right-controls">
+            <div className="leaf-dollars-bubble">
+              <span className="leaf-icon">🍃</span>
+              <span className="leaf-amount">{leafDollars}</span>
+            </div>
+            <button
+              className="tree-icon-button"
+              onClick={() => navigate('/tree')}
+              aria-label="View Tree Animation"
+            >
+              🌳
+            </button>
           </div>
         </div>
         {isToday(selectedDay) && (
@@ -247,6 +366,11 @@ const MainMenu: React.FC = () => {
               key={habit.id}
               className={`habit-card ${completedHabitId === habit.id ? 'completed-animation' : ''}`}
               style={{ borderLeftColor: habit.color }}
+              onMouseDown={() => handleLongPressStart(habit)}
+              onMouseUp={handleLongPressEnd}
+              onMouseLeave={handleLongPressEnd}
+              onTouchStart={() => handleLongPressStart(habit)}
+              onTouchEnd={handleLongPressEnd}
             >
               <div className="habit-info">
                 <div className="habit-color-dot" style={{ backgroundColor: habit.color }}></div>
@@ -310,6 +434,131 @@ const MainMenu: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Habit Details Modal */}
+      {showHabitDetails && selectedHabitForDetails && (
+        <div className="modal-overlay modal-overlay-high" onClick={() => setShowHabitDetails(false)}>
+          <div className="modal-content habit-details-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Quest Details</h2>
+              <button className="close-btn" onClick={() => setShowHabitDetails(false)} aria-label="Close">
+                ✕
+              </button>
+            </div>
+
+            <div className="habit-details-content">
+              <div className="detail-row">
+                <span className="detail-emoji">{selectedHabitForDetails.emoji}</span>
+                <span className="detail-name">{selectedHabitForDetails.label}</span>
+              </div>
+
+              <div className="detail-row">
+                <span className="detail-label">Quest Type:</span>
+                <span className="detail-value">
+                  {selectedHabitForDetails.trackingType === 'tick_cross' ? 'Build Habit (✓ / ✗)' :
+                   selectedHabitForDetails.trackingType === 'variable_amount' ? 'Build Habit (Amount)' :
+                   'Quit Habit (✓ / ✗)'}
+                </span>
+              </div>
+
+              <div className="detail-row">
+                <span className="detail-label">Duration:</span>
+                <span className="detail-value">{selectedHabitForDetails.duration_days} days</span>
+              </div>
+
+              <div className="detail-row">
+                <span className="detail-label">Days Left:</span>
+                <span className="detail-value">{getDaysLeft(selectedHabitForDetails)} days</span>
+              </div>
+
+              <div className="detail-row">
+                <span className="detail-label">Current Streak:</span>
+                <span className="detail-value">🔥 {calculateStreak(selectedHabitForDetails)}</span>
+              </div>
+
+              {selectedHabitForDetails.trackingType === 'variable_amount' && (
+                <>
+                  <div className="detail-row">
+                    <span className="detail-label">Target:</span>
+                    <span className="detail-value">{selectedHabitForDetails.target_amount} {selectedHabitForDetails.unit}</span>
+                  </div>
+                </>
+              )}
+
+              <div className="detail-row">
+                <span className="detail-label">Color:</span>
+                <div className="detail-color" style={{ backgroundColor: selectedHabitForDetails.color }}></div>
+              </div>
+            </div>
+
+            <div className="modal-actions">
+              {canReviveYesterday(selectedHabitForDetails) && (
+                <button
+                  className="btn btn-secondary revive-yesterday-btn"
+                  onClick={() => handleReviveYesterday(selectedHabitForDetails)}
+                >
+                  💚 Revive Yesterday (10🍃)
+                </button>
+              )}
+              <button
+                className="btn btn-danger delete-btn"
+                onClick={() => handleDeleteHabit(selectedHabitForDetails.id)}
+              >
+                🗑️ Delete Quest
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modals */}
+      <ConfirmModal
+        isOpen={deleteConfirmModal.isOpen}
+        onClose={() => setDeleteConfirmModal({ isOpen: false, habitId: null })}
+        onConfirm={confirmDeleteHabit}
+        title="Delete Quest?"
+        message="Are you sure you want to delete this quest? All progress will be lost."
+        confirmText="Delete"
+        cancelText="Cancel"
+        icon="🗑️"
+        type="error"
+      />
+
+      <ConfirmModal
+        isOpen={reviveConfirmModal.isOpen}
+        onClose={() => setReviveConfirmModal({ isOpen: false, habit: null })}
+        onConfirm={confirmReviveYesterday}
+        title="Revive Yesterday?"
+        message="Revive your streak for yesterday? This will cost 10 Leaf Dollars."
+        confirmText="Revive (10🍃)"
+        cancelText="Cancel"
+        icon="🍃"
+        type="success"
+      />
+
+      <ConfirmModal
+        isOpen={notEnoughLeafModal}
+        onClose={() => setNotEnoughLeafModal(false)}
+        onConfirm={() => setNotEnoughLeafModal(false)}
+        title="Not Enough Leaf Dollars"
+        message="You need 10 🍃 to revive a streak. Keep completing your quests!"
+        confirmText="OK"
+        cancelText=""
+        icon="🍃"
+        type="warning"
+      />
+
+      <ConfirmModal
+        isOpen={reviveSuccessModal}
+        onClose={() => setReviveSuccessModal(false)}
+        onConfirm={() => setReviveSuccessModal(false)}
+        title="Streak Revived!"
+        message="Your streak has been restored. Keep up the great work!"
+        confirmText="Awesome!"
+        cancelText=""
+        icon="💚"
+        type="success"
+      />
     </div>
   );
 };

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import './Calendar.css';
 import { useHabitLogs } from '../hooks/useHabitLogs';
 import { useHabits } from '../hooks/useHabits';
-import { getHabitLog, formatDate, isNumericHabitCompleted } from '../utils/habitLogsStore';
+import { getHabitLog, formatDate } from '../utils/habitLogsStore';
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -53,13 +53,29 @@ const Calendar: React.FC = () => {
 
     // Check each day up to daysToCount
     for (let day = 1; day <= daysToCount; day++) {
+      const dayDate = new Date(selectedYear, selectedMonth, day);
+      dayDate.setHours(0, 0, 0, 0);
+
+      // Check if this day is before habit was created
+      let isBeforeHabitStart = false;
+      if (selectedHabitData) {
+        const habitStartDate = new Date(selectedHabitData.createdAt);
+        habitStartDate.setHours(0, 0, 0, 0);
+        isBeforeHabitStart = dayDate < habitStartDate;
+      }
+
+      // Skip days before habit creation
+      if (isBeforeHabitStart) {
+        continue;
+      }
+
       const dateString = formatDate(selectedYear, selectedMonth, day);
       const log = getHabitLog(selectedHabit, dateString);
 
       if (log) {
-        // If numeric habit, check if ≥50% completed
+        // If numeric habit, check if 100% completed
         if (selectedHabitData?.trackingType === 'variable_amount') {
-          if (log.value !== undefined && selectedHabitData.target_amount && isNumericHabitCompleted(log.value, selectedHabitData.target_amount)) {
+          if (log.value !== undefined && selectedHabitData.target_amount && log.value >= selectedHabitData.target_amount) {
             completedDays++;
           } else {
             missedDays++;
@@ -78,7 +94,8 @@ const Calendar: React.FC = () => {
       }
     }
 
-    const completionRate = daysToCount > 0 ? Math.round((completedDays / daysToCount) * 100) : 0;
+    const totalTrackedDays = completedDays + missedDays;
+    const completionRate = totalTrackedDays > 0 ? Math.round((completedDays / totalTrackedDays) * 100) : 0;
 
     return { completedDays, missedDays, completionRate };
   };
@@ -121,6 +138,15 @@ const Calendar: React.FC = () => {
     const dayDate = new Date(selectedYear, selectedMonth, day);
     const isFuture = dayDate > currentDate;
 
+    // Check if this day is before habit was created
+    let isBeforeHabitStart = false;
+    if (selectedHabitData) {
+      const habitStartDate = new Date(selectedHabitData.createdAt);
+      habitStartDate.setHours(0, 0, 0, 0); // Reset to start of day
+      dayDate.setHours(0, 0, 0, 0); // Reset to start of day
+      isBeforeHabitStart = dayDate < habitStartDate;
+    }
+
     // Get log for this day from shared store
     const dateString = formatDate(selectedYear, selectedMonth, day);
     const log = getHabitLog(selectedHabit, dateString);
@@ -128,8 +154,8 @@ const Calendar: React.FC = () => {
     let isCompleted = false;
     if (log && selectedHabitData) {
       if (selectedHabitData.trackingType === 'variable_amount') {
-        // Check if ≥50% of target
-        isCompleted = log.value !== undefined && selectedHabitData.target_amount !== undefined && isNumericHabitCompleted(log.value, selectedHabitData.target_amount);
+        // Check if 100% of target
+        isCompleted = log.value !== undefined && selectedHabitData.target_amount !== undefined && log.value >= selectedHabitData.target_amount;
       } else {
         isCompleted = log.completed;
       }
@@ -139,14 +165,14 @@ const Calendar: React.FC = () => {
       <div
         key={day}
         className={`calendar-day ${
-          isFuture || monthHasNoData ? 'disabled' :
+          isFuture || monthHasNoData || isBeforeHabitStart ? 'disabled' :
           isToday && !isCompleted ? 'today-pending' :
           isCompleted ? 'completed' : 'missed'
         } ${isToday ? 'today' : ''}`}
-        aria-label={`Day ${day}, ${isFuture ? 'future' : isCompleted ? 'completed' : 'missed'}`}
+        aria-label={`Day ${day}, ${isFuture || isBeforeHabitStart ? 'not tracked' : isCompleted ? 'completed' : 'missed'}`}
       >
         <span className="day-number">{day}</span>
-        {!isFuture && !monthHasNoData && (
+        {!isFuture && !monthHasNoData && !isBeforeHabitStart && (
           <span className="day-status">
             {isToday && !isCompleted ? '' : isCompleted ? '✓' : '✗'}
           </span>

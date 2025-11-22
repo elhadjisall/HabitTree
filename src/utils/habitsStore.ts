@@ -1,15 +1,13 @@
 // Habits Store - Single source of truth for all habit data
 
 export type TrackingType = 'tick_cross' | 'variable_amount' | 'quit';
-export type Frequency = 'daily' | 'weekly' | 'monthly';
 
 export interface Habit {
   id: string;
   label: string;
   emoji: string;
   color: string;
-  frequency: Frequency;
-  duration_days: number; // Interpret based on frequency (days/weeks/months)
+  duration_days: number; // Total days for the quest
   trackingType: TrackingType;
   target_amount?: number; // Only for variable_amount
   unit?: string; // Only for variable_amount

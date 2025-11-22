@@ -46,35 +46,73 @@
   gap: var(--spacing-lg);
 }
 
-.nature-background {
+/* Forest background with sky and soil */
+.forest-background {
   position: relative;
-  background: linear-gradient(to bottom, #81c784, #66bb6a);
   border-radius: var(--radius-lg);
-  min-height: 400px;
-  padding: var(--spacing-xl);
+  min-height: 450px;
   box-shadow: var(--shadow-lg);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: space-around;
 }
 
-/* Decorative background elements */
-.nature-background::before {
+.forest-sky {
+  flex: 1;
+  background: linear-gradient(to bottom, #87ceeb 0%, #98d8e8 50%, #b4e4f0 100%);
+  min-height: 200px;
+  position: relative;
+}
+
+/* Add some clouds effect */
+.forest-sky::before {
   content: '';
   position: absolute;
-  bottom: 0;
+  top: 20%;
+  left: 10%;
+  right: 10%;
+  height: 60px;
+  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.4) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.forest-soil {
+  flex: 1;
+  background: linear-gradient(to bottom, #8b6914 0%, #a0522d 30%, #6b4423 100%);
+  min-height: 250px;
+  position: relative;
+  padding: var(--spacing-xl) var(--spacing-lg);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+/* Add grass effect on top of soil */
+.forest-soil::before {
+  content: '';
+  position: absolute;
+  top: 0;
   left: 0;
   right: 0;
-  height: 100px;
-  background: linear-gradient(to top, rgba(56, 142, 60, 0.3), transparent);
+  height: 20px;
+  background: linear-gradient(to bottom, #7cb342 0%, #689f38 100%);
   pointer-events: none;
+}
+
+/* Horizontal scene container */
+.horizontal-scene {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: var(--spacing-2xl);
+  width: 100%;
+  max-width: 600px;
+  z-index: 2;
 }
 
 /* Tree */
 .tree-container {
-  z-index: 2;
+  flex: 0 0 auto;
 }
 
 .tree-placeholder {
@@ -122,6 +160,7 @@
 /* Character */
 .character-container {
   z-index: 2;
+  flex: 0 0 auto;
 }
 
 .character-placeholder {

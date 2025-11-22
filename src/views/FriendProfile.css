@@ -1,0 +1,204 @@
+.friend-profile-screen {
+  padding: var(--spacing-lg) var(--spacing-md);
+  padding-bottom: calc(70px + var(--spacing-lg));
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+}
+
+.profile-header {
+  margin-bottom: var(--spacing-lg);
+}
+
+.back-button {
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  font-weight: 600;
+  color: var(--fg-primary);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.back-button:hover {
+  transform: translateX(-3px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ID Card style profile */
+.profile-card {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  border: 2px solid var(--border-color);
+}
+
+.profile-top {
+  background: linear-gradient(135deg, #6ab04c, #4a90e2);
+  padding: var(--spacing-2xl) var(--spacing-xl);
+  text-align: center;
+  color: white;
+}
+
+.profile-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: var(--radius-full);
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  margin: 0 auto var(--spacing-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.profile-username {
+  margin: 0;
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.profile-section {
+  padding: var(--spacing-xl);
+  border-top: 2px solid var(--border-color);
+}
+
+.section-title {
+  margin: 0 0 var(--spacing-lg);
+  color: var(--fg-primary);
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+}
+
+/* Quests list */
+.quests-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.quest-item {
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
+  border: 2px solid var(--border-color);
+}
+
+.quest-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+}
+
+.quest-name {
+  font-weight: 600;
+  color: var(--fg-primary);
+  font-size: var(--font-size-base);
+}
+
+.quest-stats {
+  display: flex;
+  gap: var(--spacing-md);
+}
+
+.quest-streak {
+  font-size: var(--font-size-sm);
+  color: var(--fg-secondary);
+  font-weight: 600;
+}
+
+.quest-progress-bar {
+  width: 100%;
+  height: 12px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-bottom: var(--spacing-xs);
+}
+
+.quest-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6ab04c, #4a90e2);
+  border-radius: var(--radius-full);
+  transition: width 0.5s ease-out;
+}
+
+.quest-progress-text {
+  font-size: var(--font-size-sm);
+  color: var(--fg-secondary);
+  font-weight: 600;
+}
+
+/* Private quest */
+.quest-info-private {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  justify-content: center;
+  padding: var(--spacing-md) 0;
+}
+
+.lock-icon {
+  font-size: 1.5rem;
+}
+
+.quest-name-private {
+  color: var(--fg-secondary);
+  font-style: italic;
+  font-size: var(--font-size-base);
+}
+
+/* Characters grid */
+.characters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.character-box {
+  aspect-ratio: 1;
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  transition: all var(--transition-base);
+}
+
+.character-box:hover {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-md);
+}
+
+/* Error state */
+.profile-error {
+  text-align: center;
+  padding: var(--spacing-2xl);
+}
+
+.profile-error h2 {
+  color: var(--fg-primary);
+  margin-bottom: var(--spacing-lg);
+}
+
+.profile-error .btn {
+  background: linear-gradient(135deg, #6ab04c, #5a9a3c);
+  color: white;
+  border: none;
+  padding: var(--spacing-md) var(--spacing-xl);
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.profile-error .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(106, 176, 76, 0.3);
+}

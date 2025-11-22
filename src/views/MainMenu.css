@@ -17,6 +17,13 @@
   align-items: center;
   gap: var(--spacing-md);
   flex-wrap: wrap;
+  flex: 1;
+}
+
+.header-right-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
 }
 
 .quests-title {
@@ -30,6 +37,30 @@
   box-shadow: 0 4px 12px rgba(106, 176, 76, 0.3);
   display: inline-block;
   letter-spacing: 0.5px;
+}
+
+.tree-icon-button {
+  background: linear-gradient(135deg, #7cb342, #689f38);
+  border: none;
+  border-radius: var(--radius-full);
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(124, 179, 66, 0.3);
+  transition: all var(--transition-base);
+}
+
+.tree-icon-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(124, 179, 66, 0.4);
+}
+
+.tree-icon-button:active {
+  transform: translateY(0);
 }
 
 .leaf-dollars-bubble {
@@ -454,4 +485,127 @@
   .habit-card {
     padding: var(--spacing-xl);
   }
+}
+
+/* Habit Details Modal */
+.habit-details-modal {
+  max-width: 500px;
+  width: 90%;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 2px solid var(--border-color);
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: var(--accent-primary);
+  font-size: var(--font-size-xl);
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--fg-secondary);
+  padding: var(--spacing-xs);
+  transition: all var(--transition-base);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+}
+
+.close-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--fg-primary);
+}
+
+.habit-details-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) 0;
+}
+
+.detail-emoji {
+  font-size: 2rem;
+}
+
+.detail-name {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--fg-primary);
+}
+
+.detail-label {
+  font-weight: 600;
+  color: var(--fg-secondary);
+  min-width: 120px;
+}
+
+.detail-value {
+  color: var(--fg-primary);
+  font-weight: 500;
+}
+
+.detail-color {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--border-color);
+}
+
+.modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 2px solid var(--border-color);
+}
+
+.modal-actions .btn {
+  width: 100%;
+  padding: var(--spacing-md);
+  font-weight: 600;
+  font-size: var(--font-size-base);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  color: white;
+  border: none;
+}
+
+.btn-danger:hover {
+  background: linear-gradient(135deg, #c0392b, #a93226);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+
+.revive-yesterday-btn {
+  background: linear-gradient(135deg, #27ae60, #229954);
+  color: white;
+  border: none;
+}
+
+.revive-yesterday-btn:hover {
+  background: linear-gradient(135deg, #229954, #1e8449);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
 }
