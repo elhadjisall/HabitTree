@@ -320,6 +320,16 @@ const MainMenu: React.FC = () => {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayString = formatDate(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
+
+    // Check if habit existed on yesterday
+    const habitCreatedDate = new Date(habit.createdAt);
+    habitCreatedDate.setHours(0, 0, 0, 0);
+    yesterday.setHours(0, 0, 0, 0);
+
+    if (yesterday < habitCreatedDate) {
+      return false; // Habit didn't exist yet
+    }
+
     const yesterdayLog = getHabitLog(habit.id, yesterdayString);
 
     // Can revive if yesterday was not completed AND was not already revived
@@ -336,6 +346,16 @@ const MainMenu: React.FC = () => {
     const dayOffset = selectedDay - getTodayIndex();
     const targetDate = new Date(today);
     targetDate.setDate(today.getDate() + dayOffset);
+    targetDate.setHours(0, 0, 0, 0);
+
+    // Check if habit existed on this date
+    const habitCreatedDate = new Date(habit.createdAt);
+    habitCreatedDate.setHours(0, 0, 0, 0);
+
+    if (targetDate < habitCreatedDate) {
+      return false; // Habit didn't exist yet
+    }
+
     const dateString = formatDate(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
     const log = getHabitLog(habit.id, dateString);
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './Settings.css';
 import { getDarkMode, setDarkMode } from '../utils/darkModeStorage';
+import { getUserProfile, updateUsername, updateAvatar, getUnlockedCharacterEmojis } from '../utils/charactersStorage';
 
 interface ProfileState {
   username: string;
@@ -23,10 +24,11 @@ interface FormDataState {
 }
 
 const Settings: React.FC = () => {
+  const userProfile = getUserProfile();
   const [profile, setProfile] = useState<ProfileState>({
-    username: 'HabitWarrior',
+    username: userProfile.username,
     email: 'user@example.com',
-    profilePicture: '👤',
+    profilePicture: userProfile.avatar,
   });
 
   const [editMode, setEditMode] = useState<EditModeState>({
@@ -83,11 +85,21 @@ const Settings: React.FC = () => {
         newPassword: '',
         confirmPassword: '',
       });
+    } else if (field === 'username') {
+      const newUsername = formData.username;
+      setProfile({ ...profile, username: newUsername });
+      updateUsername(newUsername);
+      alert('Username updated!');
     } else {
       setProfile({ ...profile, [field]: formData[field as keyof FormDataState] });
       alert(`${field.charAt(0).toUpperCase() + field.slice(1)} updated!`);
     }
     setEditMode({ ...editMode, [field]: false });
+  };
+
+  const handleProfilePictureChange = (emoji: string): void => {
+    setProfile({ ...profile, profilePicture: emoji });
+    updateAvatar(emoji);
   };
 
   const handleLogout = (): void => {
@@ -103,7 +115,8 @@ const Settings: React.FC = () => {
     setDarkMode(newDarkMode);
   };
 
-  const PROFILE_EMOJIS = ['👤', '😊', '🌟', '🦊', '🌳', '🍃', '🏆', '💪'];
+  // Get only unlocked characters for profile picture selection
+  const PROFILE_EMOJIS = getUnlockedCharacterEmojis();
 
   return (
     <div className="settings">
@@ -120,7 +133,7 @@ const Settings: React.FC = () => {
               <button
                 key={emoji}
                 className={`emoji-option ${profile.profilePicture === emoji ? 'active' : ''}`}
-                onClick={() => setProfile({ ...profile, profilePicture: emoji })}
+                onClick={() => handleProfilePictureChange(emoji)}
                 aria-label={`Select ${emoji} as profile picture`}
               >
                 {emoji}

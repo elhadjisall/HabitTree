@@ -51,6 +51,7 @@ export const MOCK_USERS: MockUser[] = [
 
 // Friends storage key
 const FRIENDS_KEY = 'friends';
+const FRIEND_REQUESTS_KEY = 'friendRequests';
 
 // Get friend list from localStorage
 export const getFriends = (): string[] => {
@@ -63,13 +64,57 @@ export const setFriends = (friends: string[]): void => {
   localStorage.setItem(FRIENDS_KEY, JSON.stringify(friends));
 };
 
-// Add a friend
-export const addFriend = (username: string): void => {
+// Get friend requests from localStorage
+export const getFriendRequests = (): string[] => {
+  const stored = localStorage.getItem(FRIEND_REQUESTS_KEY);
+  return stored ? JSON.parse(stored) : [];
+};
+
+// Set friend requests list
+export const setFriendRequests = (requests: string[]): void => {
+  localStorage.setItem(FRIEND_REQUESTS_KEY, JSON.stringify(requests));
+};
+
+// Send a friend request (instead of adding directly)
+export const sendFriendRequest = (username: string): void => {
+  const requests = getFriendRequests();
+  const friends = getFriends();
+
+  // Don't send if already friends or already requested
+  if (!friends.includes(username) && !requests.includes(username)) {
+    requests.push(username);
+    setFriendRequests(requests);
+  }
+};
+
+// Accept a friend request
+export const acceptFriendRequest = (username: string): void => {
+  // Add to friends list
   const friends = getFriends();
   if (!friends.includes(username)) {
     friends.push(username);
     setFriends(friends);
   }
+
+  // Remove from requests
+  const requests = getFriendRequests();
+  setFriendRequests(requests.filter(r => r !== username));
+};
+
+// Reject a friend request
+export const rejectFriendRequest = (username: string): void => {
+  const requests = getFriendRequests();
+  setFriendRequests(requests.filter(r => r !== username));
+};
+
+// Check if user has sent a friend request
+export const hasSentRequest = (username: string): boolean => {
+  return getFriendRequests().includes(username);
+};
+
+// Add a friend (kept for backwards compatibility, but now sends request instead)
+export const addFriend = (username: string): void => {
+  sendFriendRequest(username);
 };
 
 // Remove a friend
@@ -96,4 +141,13 @@ export const searchUsers = (query: string): MockUser[] => {
 // Get user by username
 export const getUserByUsername = (username: string): MockUser | undefined => {
   return MOCK_USERS.find(user => user.username === username);
+};
+
+// Initialize mock friend requests (for demo purposes)
+export const initializeMockFriendRequests = (): void => {
+  const currentRequests = getFriendRequests();
+  if (currentRequests.length === 0) {
+    // Add some mock incoming friend requests if none exist
+    setFriendRequests(['@samurai_jake', '@kitsune']);
+  }
 };

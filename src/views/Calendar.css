@@ -154,6 +154,47 @@
   margin-bottom: var(--spacing-xs);
 }
 
+/* Dark Mode - Improve calendar date contrast */
+.dark-mode .day-number {
+  color: #e8e8e8;
+  font-weight: 700;
+}
+
+.dark-mode .calendar-day {
+  background: #3a3a3a;
+  border-color: #505050;
+}
+
+.dark-mode .calendar-day.completed {
+  background: linear-gradient(135deg, #2d5a3d, #235a34);
+  border-color: #00b894;
+}
+
+.dark-mode .calendar-day.completed .day-number,
+.dark-mode .calendar-day.completed .day-status {
+  color: #e8e8e8;
+}
+
+.dark-mode .calendar-day.missed {
+  background: linear-gradient(135deg, #5a2d2d, #4a2424);
+  border-color: #ff6b6b;
+}
+
+.dark-mode .calendar-day.missed .day-number,
+.dark-mode .calendar-day.missed .day-status {
+  color: #e8e8e8;
+}
+
+.dark-mode .calendar-day.today-pending {
+  background: #2d2d2d;
+  border-color: #6ab04c;
+}
+
+.dark-mode .calendar-day.disabled {
+  background: #2a2a2a;
+  border-color: #404040;
+}
+
 .day-status {
   font-size: var(--font-size-lg);
   line-height: 1;

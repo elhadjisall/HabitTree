@@ -132,6 +132,18 @@
   border-bottom: 6px solid transparent;
 }
 
+/* Dark Mode - Improve speech bubble contrast */
+.dark-mode .speech-bubble {
+  background: #3a3a3a;
+  color: #e8e8e8;
+  border: 2px solid #505050;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+.dark-mode .speech-bubble::after {
+  border-left-color: #3a3a3a;
+}
+
 @keyframes fadeInOut {
   0% { opacity: 0; transform: translateX(-10px); }
   10% { opacity: 1; transform: translateX(0); }
@@ -487,27 +499,30 @@
   }
 }
 
-/* Habit Details Modal - Mobile Bottom Sheet */
+/* Habit Details Modal - Compact Mobile Style */
 .habit-details-modal {
-  width: 100%;
-  max-width: 100%;
-  margin: 0;
-  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  width: 90%;
+  max-width: 400px;
+  margin: 0 auto;
+  border-radius: var(--radius-xl);
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  max-height: 85vh;
+  bottom: 80px; /* Above bottom nav */
+  left: 50%;
+  transform: translateX(-50%);
+  max-height: 70vh;
   overflow-y: auto;
-  animation: slideUpFromBottom 0.3s ease-out;
+  animation: scaleIn 0.2s ease-out;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
-@keyframes slideUpFromBottom {
+@keyframes scaleIn {
   from {
-    transform: translateY(100%);
+    opacity: 0;
+    transform: translateX(-50%) scale(0.9);
   }
   to {
-    transform: translateY(0);
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
   }
 }
 
