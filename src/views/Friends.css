@@ -1,6 +1,6 @@
 .friends-screen {
-  padding: var(--spacing-lg) var(--spacing-md);
-  padding-bottom: calc(70px + var(--spacing-lg));
+  padding: var(--spacing-md);
+  padding-bottom: calc(70px + var(--spacing-md));
   min-height: 100vh;
   background-color: var(--bg-primary);
 }
@@ -9,16 +9,17 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
+  padding: 0;
 }
 
 .friends-title {
   margin: 0;
   color: white;
   background: linear-gradient(135deg, #6ab04c, #4a90e2);
-  padding: var(--spacing-sm) var(--spacing-xl);
+  padding: var(--spacing-xs) var(--spacing-lg);
   border-radius: var(--radius-full);
-  font-size: var(--font-size-2xl);
+  font-size: var(--font-size-xl);
   font-weight: 700;
   box-shadow: 0 4px 12px rgba(106, 176, 76, 0.3);
 }
@@ -98,11 +99,11 @@
   gap: var(--spacing-md);
 }
 
-/* Friend capsule */
+/* Friend capsule - Full width mobile style */
 .friend-capsule {
   background: var(--bg-secondary);
-  border-radius: var(--radius-xl);
-  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
@@ -110,26 +111,33 @@
   transition: all var(--transition-base);
   cursor: pointer;
   user-select: none;
+  width: 100%;
+  margin: 0;
 }
 
-.friend-capsule:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+.friend-capsule:active {
+  transform: scale(0.98);
+  background: var(--bg-tertiary);
 }
 
 .friend-capsule.search-result {
   cursor: default;
 }
 
+.friend-capsule.search-result:active {
+  transform: none;
+  background: var(--bg-secondary);
+}
+
 .friend-avatar {
-  width: 50px;
-  height: 50px;
+  width: 48px;
+  height: 48px;
   border-radius: var(--radius-full);
   background: linear-gradient(135deg, #f0f0f0, #e0e0e0);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2rem;
+  font-size: 1.8rem;
   flex-shrink: 0;
 }
 
@@ -137,12 +145,16 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .friend-username {
   font-weight: 600;
   color: var(--fg-primary);
   font-size: var(--font-size-base);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .view-profile-button {
@@ -209,25 +221,23 @@
   font-size: var(--font-size-base);
 }
 
-/* Remove friend modal */
+/* Remove friend modal - Mobile bottom sheet */
 .remove-friend-modal {
-  max-width: 400px;
+  width: 100%;
+  max-width: 100%;
   text-align: center;
 }
 
 .remove-friend-modal h3 {
   margin: 0 0 var(--spacing-md);
   color: var(--fg-primary);
+  font-size: var(--font-size-xl);
 }
 
 .remove-friend-modal p {
   color: var(--fg-secondary);
   margin-bottom: var(--spacing-lg);
-}
-
-/* High z-index overlay for modals above bottom nav */
-.modal-overlay-high {
-  z-index: 10000 !important;
+  font-size: var(--font-size-base);
 }
 
 .btn-secondary {

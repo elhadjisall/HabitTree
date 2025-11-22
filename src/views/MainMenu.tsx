@@ -5,7 +5,7 @@ import { getLeafDollars, addLeafDollars, subtractLeafDollars } from '../utils/le
 import { updateHabitLog, getTodayDateString, formatDate, getHabitLog, getHabitLogs, setHabitLogs } from '../utils/habitLogsStore';
 import { useHabits } from '../hooks/useHabits';
 import { calculateStreak } from '../utils/streakCalculation';
-import { deleteHabit, type Habit } from '../utils/habitsStore';
+import { deleteHabit, updateHabit, type Habit } from '../utils/habitsStore';
 import ConfirmModal from '../components/ConfirmModal';
 
 const WEEKDAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
@@ -51,6 +51,7 @@ const MainMenu: React.FC = () => {
   const [reviveConfirmModal, setReviveConfirmModal] = useState<{ isOpen: boolean; habit: Habit | null }>({ isOpen: false, habit: null });
   const [notEnoughLeafModal, setNotEnoughLeafModal] = useState<boolean>(false);
   const [reviveSuccessModal, setReviveSuccessModal] = useState<boolean>(false);
+  const [privacyChangeModal, setPrivacyChangeModal] = useState<{ isOpen: boolean; habit: Habit | null }>({ isOpen: false, habit: null });
 
   // Get selected character from localStorage
   const getSelectedCharacter = (): string => {
@@ -121,6 +122,10 @@ const MainMenu: React.FC = () => {
     if (!isToday(selectedDay) || (habit.trackingType !== 'tick_cross' && habit.trackingType !== 'quit')) return;
 
     const currentState = habitStates[habit.id];
+
+    // Prevent unchecking if already completed (anti-exploit)
+    if (currentState.completed) return;
+
     const newCompleted = !currentState.completed;
 
     // Save to shared habit logs store
@@ -145,9 +150,13 @@ const MainMenu: React.FC = () => {
   const handleNumericChange = (habit: Habit, value: string): void => {
     if (!isToday(selectedDay) || habit.trackingType !== 'variable_amount') return;
 
-    const newValue = Math.max(0, Number(value) || 0);
     const previousValue = habitStates[habit.id]?.currentValue || 0;
     const wasCompleted = habit.target_amount !== undefined && previousValue >= habit.target_amount;
+
+    // Prevent changes if already completed (anti-exploit)
+    if (wasCompleted) return;
+
+    const newValue = Math.max(0, Number(value) || 0);
     const isNowCompleted = habit.target_amount !== undefined && newValue >= habit.target_amount;
 
     // Save to shared habit logs store
@@ -186,15 +195,15 @@ const MainMenu: React.FC = () => {
       targetDate.setDate(today.getDate() + dayOffset);
       const dateString = formatDate(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
 
-      // Save completion to logs
+      // Save completion to logs with wasRevived flag
       if (habit.trackingType === 'variable_amount' && habit.target_amount) {
-        updateHabitLog(habit.id, dateString, true, habit.target_amount);
+        updateHabitLog(habit.id, dateString, true, habit.target_amount, true);
         setHabitStates(prev => ({
           ...prev,
           [habit.id]: { ...prev[habit.id], currentValue: habit.target_amount!, completed: true }
         }));
       } else {
-        updateHabitLog(habit.id, dateString, true);
+        updateHabitLog(habit.id, dateString, true, undefined, true);
         setHabitStates(prev => ({
           ...prev,
           [habit.id]: { ...prev[habit.id], completed: true }
@@ -261,6 +270,20 @@ const MainMenu: React.FC = () => {
     setReviveConfirmModal({ isOpen: true, habit });
   };
 
+  const handleChangePrivacy = (habit: Habit): void => {
+    setPrivacyChangeModal({ isOpen: true, habit });
+  };
+
+  const confirmChangePrivacy = (): void => {
+    if (privacyChangeModal.habit) {
+      const habit = privacyChangeModal.habit;
+      updateHabit(habit.id, { isPrivate: !habit.isPrivate });
+      setPrivacyChangeModal({ isOpen: false, habit: null });
+      setShowHabitDetails(false);
+      setSelectedHabitForDetails(null);
+    }
+  };
+
   const confirmReviveYesterday = (): void => {
     if (reviveConfirmModal.habit) {
       const habit = reviveConfirmModal.habit;
@@ -272,11 +295,11 @@ const MainMenu: React.FC = () => {
       yesterday.setDate(yesterday.getDate() - 1);
       const yesterdayString = formatDate(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
 
-      // Mark yesterday as completed
+      // Mark yesterday as completed with wasRevived flag
       if (habit.trackingType === 'variable_amount' && habit.target_amount) {
-        updateHabitLog(habit.id, yesterdayString, true, habit.target_amount);
+        updateHabitLog(habit.id, yesterdayString, true, habit.target_amount, true);
       } else {
-        updateHabitLog(habit.id, yesterdayString, true);
+        updateHabitLog(habit.id, yesterdayString, true, undefined, true);
       }
 
       setReviveConfirmModal({ isOpen: false, habit: null });
@@ -299,8 +322,25 @@ const MainMenu: React.FC = () => {
     const yesterdayString = formatDate(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
     const yesterdayLog = getHabitLog(habit.id, yesterdayString);
 
-    // Can revive if yesterday was not completed
-    return !yesterdayLog?.completed;
+    // Can revive if yesterday was not completed AND was not already revived
+    return !yesterdayLog?.completed && !yesterdayLog?.wasRevived;
+  };
+
+  // Check if the selected past day can be revived
+  const canReviveSelectedDay = (habit: Habit): boolean => {
+    if (isToday(selectedDay) || selectedDay > getTodayIndex()) {
+      return false; // Can't revive today or future days
+    }
+
+    const today = new Date();
+    const dayOffset = selectedDay - getTodayIndex();
+    const targetDate = new Date(today);
+    targetDate.setDate(today.getDate() + dayOffset);
+    const dateString = formatDate(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
+    const log = getHabitLog(habit.id, dateString);
+
+    // Can revive if not completed AND was not already revived
+    return !log?.completed && !log?.wasRevived;
   };
 
   return (
@@ -392,7 +432,7 @@ const MainMenu: React.FC = () => {
                     type="checkbox"
                     checked={state.completed}
                     onChange={() => handleCheckboxToggle(habit)}
-                    disabled={!isToday(selectedDay)}
+                    disabled={!isToday(selectedDay) || state.completed}
                     aria-label={`Mark ${habit.label} as ${state.completed ? 'incomplete' : 'complete'}`}
                   />
                   <span className="checkbox-custom"></span>
@@ -405,7 +445,7 @@ const MainMenu: React.FC = () => {
                     max={habit.target_amount}
                     value={state.currentValue}
                     onChange={(e) => handleNumericChange(habit, e.target.value)}
-                    disabled={!isToday(selectedDay)}
+                    disabled={!isToday(selectedDay) || (habit.target_amount !== undefined && state.currentValue >= habit.target_amount)}
                     aria-label={`${habit.label} progress`}
                   />
                   <span className="numeric-target">/ {habit.target_amount} {habit.unit}</span>
@@ -413,7 +453,7 @@ const MainMenu: React.FC = () => {
               )}
 
               {/* Revive streak button for past days */}
-              {!isToday(selectedDay) && selectedDay < getTodayIndex() && (
+              {!isToday(selectedDay) && selectedDay < getTodayIndex() && canReviveSelectedDay(habit) && (
                 <button
                   className="revive-btn"
                   onClick={() => handleReviveStreak(habit)}
@@ -489,6 +529,13 @@ const MainMenu: React.FC = () => {
                 <span className="detail-label">Color:</span>
                 <div className="detail-color" style={{ backgroundColor: selectedHabitForDetails.color }}></div>
               </div>
+
+              <div className="detail-row">
+                <span className="detail-label">Privacy:</span>
+                <span className="detail-value">
+                  {selectedHabitForDetails.isPrivate ? '🔒 Private' : '👥 Public'}
+                </span>
+              </div>
             </div>
 
             <div className="modal-actions">
@@ -500,6 +547,12 @@ const MainMenu: React.FC = () => {
                   💚 Revive Yesterday (10🍃)
                 </button>
               )}
+              <button
+                className="btn btn-secondary change-privacy-btn"
+                onClick={() => handleChangePrivacy(selectedHabitForDetails)}
+              >
+                {selectedHabitForDetails.isPrivate ? '👥 Make Public' : '🔒 Make Private'}
+              </button>
               <button
                 className="btn btn-danger delete-btn"
                 onClick={() => handleDeleteHabit(selectedHabitForDetails.id)}
@@ -558,6 +611,20 @@ const MainMenu: React.FC = () => {
         cancelText=""
         icon="💚"
         type="success"
+      />
+
+      <ConfirmModal
+        isOpen={privacyChangeModal.isOpen}
+        onClose={() => setPrivacyChangeModal({ isOpen: false, habit: null })}
+        onConfirm={confirmChangePrivacy}
+        title="Change Privacy?"
+        message={privacyChangeModal.habit?.isPrivate
+          ? "Make this quest visible to your friends?"
+          : "Hide this quest from your friends?"}
+        confirmText="Change"
+        cancelText="Cancel"
+        icon={privacyChangeModal.habit?.isPrivate ? '👥' : '🔒'}
+        type="warning"
       />
     </div>
   );

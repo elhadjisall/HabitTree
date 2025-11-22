@@ -5,6 +5,7 @@ export interface HabitLog {
   date: string; // YYYY-MM-DD format
   completed: boolean;
   value?: number; // For numeric habits
+  wasRevived?: boolean; // Track if this day was revived (hide revive button)
 }
 
 const HABIT_LOGS_KEY = 'habitLogs';
@@ -29,14 +30,15 @@ export const getHabitLog = (habitId: number | string, date: string): HabitLog | 
 };
 
 // Update or create a log entry
-export const updateHabitLog = (habitId: number | string, date: string, completed: boolean, value?: number): void => {
+export const updateHabitLog = (habitId: number | string, date: string, completed: boolean, value?: number, wasRevived?: boolean): void => {
   const logs = getHabitLogs();
   const existingIndex = logs.findIndex(log => String(log.habitId) === String(habitId) && log.date === date);
 
-  const newLog: HabitLog = { habitId, date, completed, value };
+  const newLog: HabitLog = { habitId, date, completed, value, wasRevived };
 
   if (existingIndex >= 0) {
-    logs[existingIndex] = newLog;
+    // Preserve wasRevived flag if it was already set
+    logs[existingIndex] = { ...logs[existingIndex], ...newLog };
   } else {
     logs.push(newLog);
   }

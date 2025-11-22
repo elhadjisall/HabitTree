@@ -13,6 +13,7 @@ export interface Habit {
   unit?: string; // Only for variable_amount
   streak: number;
   createdAt: string; // ISO date string
+  isPrivate?: boolean; // Public by default (false), true for private habits
 }
 
 const HABITS_KEY = 'habits';

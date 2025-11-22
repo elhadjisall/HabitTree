@@ -45,6 +45,7 @@ interface QuestFormState {
   trackingType: TrackingType;
   targetAmount: number;
   unit: string;
+  isPrivate: boolean;
 }
 
 const QuestCreation: React.FC = () => {
@@ -63,6 +64,7 @@ const QuestCreation: React.FC = () => {
     trackingType: 'tick_cross',
     targetAmount: 0,
     unit: '',
+    isPrivate: false,
   });
 
   const handlePresetSelect = (preset: PresetQuest): void => {
@@ -76,6 +78,7 @@ const QuestCreation: React.FC = () => {
       trackingType: preset.trackingType,
       targetAmount: preset.defaultTarget || 0,
       unit: preset.defaultUnit || '',
+      isPrivate: false,
     });
     setShowForm(true);
   };
@@ -91,6 +94,7 @@ const QuestCreation: React.FC = () => {
       trackingType: 'tick_cross',
       targetAmount: 0,
       unit: '',
+      isPrivate: false,
     });
     setShowForm(true);
   };
@@ -117,6 +121,7 @@ const QuestCreation: React.FC = () => {
       trackingType: quest.trackingType,
       target_amount: quest.trackingType === 'variable_amount' ? quest.targetAmount : undefined,
       unit: quest.trackingType === 'variable_amount' ? quest.unit : undefined,
+      isPrivate: quest.isPrivate,
     });
 
     // Show confirmation modal
@@ -137,6 +142,7 @@ const QuestCreation: React.FC = () => {
       trackingType: 'tick_cross',
       targetAmount: 0,
       unit: '',
+      isPrivate: false,
     });
   };
 
@@ -325,6 +331,33 @@ const QuestCreation: React.FC = () => {
                 </div>
               </div>
             )}
+
+            {/* Privacy Setting */}
+            <div className="form-group">
+              <label>Privacy</label>
+              <div className="radio-group">
+                <label className="radio-label">
+                  <input
+                    type="radio"
+                    name="privacy"
+                    value="public"
+                    checked={!quest.isPrivate}
+                    onChange={() => setQuest({ ...quest, isPrivate: false })}
+                  />
+                  <span>Public - Visible to friends</span>
+                </label>
+                <label className="radio-label">
+                  <input
+                    type="radio"
+                    name="privacy"
+                    value="private"
+                    checked={quest.isPrivate}
+                    onChange={() => setQuest({ ...quest, isPrivate: true })}
+                  />
+                  <span>Private - Only you can see</span>
+                </label>
+              </div>
+            </div>
 
             <button type="submit" className="btn btn-primary submit-btn">
               🎯 Create Quest

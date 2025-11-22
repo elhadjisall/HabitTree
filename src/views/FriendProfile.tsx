@@ -22,8 +22,6 @@ const FriendProfile: React.FC = () => {
     );
   }
 
-  const allHabits = [...user.publicHabits, ...user.privateHabits];
-
   return (
     <div className="friend-profile-screen">
       <header className="profile-header">
@@ -32,58 +30,54 @@ const FriendProfile: React.FC = () => {
         </button>
       </header>
 
-      {/* ID Card style profile */}
+      {/* Mobile Profile Card */}
       <div className="profile-card">
-        {/* Top section with avatar and username */}
+        {/* Top section with username */}
         <div className="profile-top">
-          <div className="profile-avatar">{user.avatar}</div>
           <h2 className="profile-username">{user.username}</h2>
+        </div>
+
+        {/* Avatar and Characters section - Horizontal layout */}
+        <div className="profile-section profile-section-compact">
+          <div className="avatar-and-characters">
+            <div className="profile-avatar-large">{user.avatar}</div>
+            <div className="characters-horizontal">
+              {user.characters.filter(c => c !== user.avatar).map((character, index) => (
+                <div key={index} className="character-box-small">
+                  {character}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Quests section */}
         <div className="profile-section">
           <h3 className="section-title">🎯 Active Quests</h3>
           <div className="quests-list">
-            {allHabits.map((habit, index) => (
-              <div key={index} className="quest-item">
-                {habit.isPrivate ? (
-                  <>
-                    <div className="quest-info-private">
-                      <span className="lock-icon">🔒</span>
-                      <span className="quest-name-private">This quest is private</span>
+            {user.publicHabits.length > 0 ? (
+              user.publicHabits.map((habit, index) => (
+                <div key={index} className="quest-item">
+                  <div className="quest-info">
+                    <span className="quest-name">
+                      {habit.name}
+                    </span>
+                    <div className="quest-stats">
+                      <span className="quest-streak">🔥 {habit.streak}</span>
                     </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="quest-info">
-                      <span className="quest-name">{habit.name}</span>
-                      <div className="quest-stats">
-                        <span className="quest-streak">🔥 {habit.streak}</span>
-                      </div>
-                    </div>
-                    <div className="quest-progress-bar">
-                      <div
-                        className="quest-progress-fill"
-                        style={{ width: `${habit.progress}%` }}
-                      ></div>
-                    </div>
-                    <span className="quest-progress-text">{habit.progress}%</span>
-                  </>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Characters section */}
-        <div className="profile-section">
-          <h3 className="section-title">👥 Companions</h3>
-          <div className="characters-grid">
-            {user.characters.map((character, index) => (
-              <div key={index} className="character-box">
-                {character}
-              </div>
-            ))}
+                  </div>
+                  <div className="quest-progress-bar">
+                    <div
+                      className="quest-progress-fill"
+                      style={{ width: `${habit.progress}%` }}
+                    ></div>
+                  </div>
+                  <span className="quest-progress-text">{habit.progress}%</span>
+                </div>
+              ))
+            ) : (
+              <p className="no-quests">No public quests to display</p>
+            )}
           </div>
         </div>
       </div>

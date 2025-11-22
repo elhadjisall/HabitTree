@@ -55,6 +55,29 @@
   --z-modal-high: 10000;
 }
 
+/* Dark Mode */
+.dark-mode {
+  /* Dark Color Palette */
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #2d2d2d;
+  --bg-tertiary: #3a3a3a;
+
+  --fg-primary: #e8e8e8;
+  --fg-secondary: #b0b0b0;
+  --fg-tertiary: #808080;
+
+  --accent-primary: #6ab04c;
+  --accent-secondary: #5a9a3c;
+  --accent-success: #00b894;
+  --accent-error: #ff6b6b;
+  --accent-warning: #fdcb6e;
+
+  --border-color: #404040;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+}
+
 /* Base Reset */
 * {
   margin: 0;
@@ -226,7 +249,7 @@ a:hover {
   }
 }
 
-/* Global Modal Styles */
+/* Global Modal Styles - Mobile Bottom Sheet */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -237,10 +260,10 @@ a:hover {
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
   z-index: var(--z-modal);
-  padding: var(--spacing-md);
+  padding: 0;
   animation: fadeIn 0.2s ease-out;
 }
 
@@ -259,22 +282,21 @@ a:hover {
 
 .modal-content {
   background: var(--bg-secondary);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   padding: var(--spacing-xl);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  max-width: 90vw;
-  max-height: 90vh;
+  box-shadow: 0 -10px 25px -5px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 100%;
+  max-height: 85vh;
   overflow-y: auto;
-  animation: slideUp 0.3s ease-out;
+  animation: slideUpFromBottom 0.3s ease-out;
 }
 
-@keyframes slideUp {
+@keyframes slideUpFromBottom {
   from {
-    opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(100%);
   }
   to {
-    opacity: 1;
     transform: translateY(0);
   }
 }

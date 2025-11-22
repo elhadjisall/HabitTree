@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Settings.css';
+import { getDarkMode, setDarkMode } from '../utils/darkModeStorage';
 
 interface ProfileState {
   username: string;
@@ -42,6 +43,17 @@ const Settings: React.FC = () => {
     confirmPassword: '',
   });
 
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(getDarkMode());
+
+  useEffect(() => {
+    // Listen for dark mode changes from other tabs/windows
+    const handleDarkModeChange = () => {
+      setIsDarkMode(getDarkMode());
+    };
+    window.addEventListener('darkModeChanged', handleDarkModeChange);
+    return () => window.removeEventListener('darkModeChanged', handleDarkModeChange);
+  }, []);
+
   const handleEdit = (field: keyof EditModeState): void => {
     setEditMode({ ...editMode, [field]: true });
   };
@@ -83,6 +95,12 @@ const Settings: React.FC = () => {
       alert('Logged out successfully!');
       // In a real app, this would clear auth tokens and redirect to login
     }
+  };
+
+  const handleDarkModeToggle = (): void => {
+    const newDarkMode = !isDarkMode;
+    setIsDarkMode(newDarkMode);
+    setDarkMode(newDarkMode);
   };
 
   const PROFILE_EMOJIS = ['👤', '😊', '🌟', '🦊', '🌳', '🍃', '🏆', '💪'];
@@ -221,6 +239,23 @@ const Settings: React.FC = () => {
           ) : (
             <p className="card-value">••••••••</p>
           )}
+        </section>
+
+        {/* Dark Mode */}
+        <section className="settings-card">
+          <div className="card-header">
+            <h3>Dark Mode</h3>
+            <label className="toggle-switch">
+              <input
+                type="checkbox"
+                checked={isDarkMode}
+                onChange={handleDarkModeToggle}
+                aria-label="Toggle dark mode"
+              />
+              <span className="toggle-slider"></span>
+            </label>
+          </div>
+          <p className="card-value">{isDarkMode ? 'Enabled' : 'Disabled'}</p>
         </section>
 
         {/* Account actions */}
