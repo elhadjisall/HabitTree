@@ -6,7 +6,7 @@ const BottomNav: React.FC = () => {
   return (
     <nav className="bottom-nav" role="navigation" aria-label="Main navigation">
       <NavLink
-        to="/"
+        to="/app"
         className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}
         aria-label="Main Menu"
       >

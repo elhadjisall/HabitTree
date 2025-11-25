@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import './Calendar.css';
 import { useHabitLogs } from '../hooks/useHabitLogs';
 import { useHabits } from '../hooks/useHabits';
-import { getHabitLog, formatDate } from '../utils/habitLogsStore';
+import { getHabitLog, formatDate, updateHabitLog } from '../utils/habitLogsStore';
+import { getLeafDollars, subtractLeafDollars } from '../utils/leafDollarsStorage';
+import ConfirmModal from '../components/ConfirmModal';
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -17,6 +19,11 @@ const Calendar: React.FC = () => {
   const [selectedHabit, setSelectedHabit] = useState<string>(habits.length > 0 ? habits[0].id : '');
   const [selectedMonth, setSelectedMonth] = useState<number>(currentDate.getMonth());
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
+
+  // Revival modal states
+  const [reviveModal, setReviveModal] = useState<{ isOpen: boolean; day: number | null; dateString: string | null }>({ isOpen: false, day: null, dateString: null });
+  const [notEnoughLeafModal, setNotEnoughLeafModal] = useState<boolean>(false);
+  const [reviveSuccessModal, setReviveSuccessModal] = useState<boolean>(false);
 
   // Generate year options (previous, current, next year)
   const currentYear = currentDate.getFullYear();
@@ -120,8 +127,51 @@ const Calendar: React.FC = () => {
     return character ? character.emoji : '🦊';
   };
 
+  // Handle clicking on a missed day
+  const handleDayClick = (day: number, isMissed: boolean, isCompleted: boolean, isFuture: boolean, isBeforeHabitStart: boolean, dateString: string): void => {
+    // Only allow revival for missed days (not completed, not future, not before habit start)
+    if (!isMissed || isCompleted || isFuture || isBeforeHabitStart || monthHasNoData) {
+      return;
+    }
+
+    const log = getHabitLog(selectedHabit, dateString);
+    // Don't show revival if already revived
+    if (log?.wasRevived) {
+      return;
+    }
+
+    setReviveModal({ isOpen: true, day, dateString });
+  };
+
+  // Confirm revival
+  const confirmRevival = (): void => {
+    if (!reviveModal.day || !reviveModal.dateString || !selectedHabitData) {
+      return;
+    }
+
+    const leafDollars = getLeafDollars();
+    if (leafDollars < 10) {
+      setNotEnoughLeafModal(true);
+      setReviveModal({ isOpen: false, day: null, dateString: null });
+      return;
+    }
+
+    // Deduct 10 leaf dollars
+    subtractLeafDollars(10);
+
+    // Mark the day as completed with wasRevived flag
+    if (selectedHabitData.trackingType === 'variable_amount' && selectedHabitData.target_amount) {
+      updateHabitLog(selectedHabit, reviveModal.dateString, true, selectedHabitData.target_amount, true);
+    } else {
+      updateHabitLog(selectedHabit, reviveModal.dateString, true, undefined, true);
+    }
+
+    setReviveModal({ isOpen: false, day: null, dateString: null });
+    setReviveSuccessModal(true);
+  };
+
   // Generate calendar grid
-  const calendarDays: JSX.Element[] = [];
+  const calendarDays: React.ReactElement[] = [];
 
   // Empty cells before first day
   for (let i = 0; i < adjustedFirstDay; i++) {
@@ -161,6 +211,9 @@ const Calendar: React.FC = () => {
       }
     }
 
+    const isMissed = !isCompleted && !isFuture && !monthHasNoData && !isBeforeHabitStart;
+    const canRevive = isMissed && !log?.wasRevived;
+
     calendarDays.push(
       <div
         key={day}
@@ -168,8 +221,10 @@ const Calendar: React.FC = () => {
           isFuture || monthHasNoData || isBeforeHabitStart ? 'disabled' :
           isToday && !isCompleted ? 'today-pending' :
           isCompleted ? 'completed' : 'missed'
-        } ${isToday ? 'today' : ''}`}
+        } ${isToday ? 'today' : ''} ${canRevive ? 'revivable' : ''}`}
         aria-label={`Day ${day}, ${isFuture || isBeforeHabitStart ? 'not tracked' : isCompleted ? 'completed' : 'missed'}`}
+        onClick={() => handleDayClick(day, isMissed, isCompleted, isFuture, isBeforeHabitStart, dateString)}
+        style={{ cursor: canRevive ? 'pointer' : 'default' }}
       >
         <span className="day-number">{day}</span>
         {!isFuture && !monthHasNoData && !isBeforeHabitStart && (
@@ -295,6 +350,45 @@ const Calendar: React.FC = () => {
           </p>
         </div>
       </div>
+
+      {/* Revive Day Confirmation Modal */}
+      <ConfirmModal
+        isOpen={reviveModal.isOpen}
+        onClose={() => setReviveModal({ isOpen: false, day: null, dateString: null })}
+        onConfirm={confirmRevival}
+        title="Revive This Day?"
+        message="Revive this missed day for 10 Leaf Dollars? 🍃"
+        confirmText="Revive (10🍃)"
+        cancelText="Cancel"
+        icon="💚"
+        type="success"
+      />
+
+      {/* Not Enough Leaf Dollars Modal */}
+      <ConfirmModal
+        isOpen={notEnoughLeafModal}
+        onClose={() => setNotEnoughLeafModal(false)}
+        onConfirm={() => setNotEnoughLeafModal(false)}
+        title="Not Enough Leaf Dollars"
+        message="You need 10 🍃 to revive a day. Keep completing your quests!"
+        confirmText="OK"
+        cancelText=""
+        icon="🍃"
+        type="warning"
+      />
+
+      {/* Revival Success Modal */}
+      <ConfirmModal
+        isOpen={reviveSuccessModal}
+        onClose={() => setReviveSuccessModal(false)}
+        onConfirm={() => setReviveSuccessModal(false)}
+        title="Day Revived!"
+        message="Your day has been restored. Keep up the great work!"
+        confirmText="Awesome!"
+        cancelText=""
+        icon="✨"
+        type="success"
+      />
     </div>
   );
 };
