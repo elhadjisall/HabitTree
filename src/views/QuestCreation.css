@@ -298,7 +298,7 @@ input:disabled {
   font-weight: 600;
 }
 
-/* Confirmation Modal */
+/* Confirmation Modal - Mobile styled, above bottom bar */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -311,19 +311,21 @@ input:disabled {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 9999;
   padding: var(--spacing-lg);
 }
 
 .modal-content {
   background: var(--bg-secondary);
   border-radius: var(--radius-xl);
-  padding: var(--spacing-2xl);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-  max-width: 400px;
-  width: 100%;
+  padding: var(--spacing-xl) var(--spacing-lg);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  max-width: 360px;
+  width: 90%;
   text-align: center;
   animation: modalSlideIn 0.3s ease-out;
+  position: relative;
+  z-index: 10000;
 }
 
 @keyframes modalSlideIn {

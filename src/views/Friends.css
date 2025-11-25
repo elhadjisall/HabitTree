@@ -1,6 +1,6 @@
 .friends-screen {
-  padding: var(--spacing-md);
-  padding-bottom: calc(70px + var(--spacing-md));
+  padding: var(--spacing-lg) var(--spacing-md);
+  padding-bottom: calc(70px + var(--spacing-lg));
   min-height: 100vh;
   background-color: var(--bg-primary);
 }
@@ -328,3 +328,11 @@
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(127, 140, 141, 0.3);
 }
+/* Match MainMenu mobile layout width on desktop */
+@media (min-width: 1025px) {
+  .friends-screen {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+}
+

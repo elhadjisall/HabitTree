@@ -11,7 +11,8 @@ const FriendProfile: React.FC = () => {
 
   if (!user) {
     return (
-      <div className="friend-profile-screen">
+      <div className="main-menu friend-profile-screen">
+
         <div className="profile-error">
           <h2>User not found</h2>
           <button className="btn" onClick={() => navigate('/friends')}>

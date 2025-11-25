@@ -81,7 +81,7 @@ const Friends: React.FC = () => {
   };
 
   return (
-    <div className="friends-screen">
+    <div className="main-menu friends-screen">
       <header className="friends-header">
         <h1 className="friends-title">Friends</h1>
         <button
