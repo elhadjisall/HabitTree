@@ -5,8 +5,10 @@ import { getLeafDollars, addLeafDollars, subtractLeafDollars } from '../utils/le
 import { updateHabitLog, getTodayDateString, formatDate, getHabitLog, getHabitLogs, setHabitLogs } from '../utils/habitLogsStore';
 import { useHabits } from '../hooks/useHabits';
 import { calculateStreak } from '../utils/streakCalculation';
-import { deleteHabit, updateHabit, type Habit } from '../utils/habitsStore';
+import { deleteHabit, updateHabit, completeHabit, type Habit } from '../utils/habitsStore';
+import { hasShownCompletionPopup, markQuestCompletionShown } from '../utils/completedQuestsStorage';
 import ConfirmModal from '../components/ConfirmModal';
+import QuestCompletionCongrats from '../components/QuestCompletionCongrats';
 
 const WEEKDAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 
@@ -52,6 +54,19 @@ const MainMenu: React.FC = () => {
   const [notEnoughLeafModal, setNotEnoughLeafModal] = useState<boolean>(false);
   const [reviveSuccessModal, setReviveSuccessModal] = useState<boolean>(false);
   const [privacyChangeModal, setPrivacyChangeModal] = useState<{ isOpen: boolean; habit: Habit | null }>({ isOpen: false, habit: null });
+
+  // Quest completion popup states
+  const [completionQueue, setCompletionQueue] = useState<string[]>([]);
+  const [showCompletionPopup, setShowCompletionPopup] = useState<boolean>(false);
+  const [currentCompletion, setCurrentCompletion] = useState<{
+    questName: string;
+    questEmoji: string;
+    questColor: string;
+    daysCompleted: number;
+    daysMissed: number;
+    highestStreak: number;
+  } | null>(null);
+  const [questToRemove, setQuestToRemove] = useState<string | null>(null);
 
   // Get selected character from localStorage
   const getSelectedCharacter = (): string => {
@@ -114,8 +129,59 @@ const MainMenu: React.FC = () => {
     return () => clearInterval(interval);
   }, [selectedDay]);
 
+  // Check for completed quests on component mount and when habits change
+  useEffect(() => {
+    const completedQuestIds: string[] = [];
+
+    habits.forEach(habit => {
+      const daysLeft = getDaysLeft(habit);
+
+      // Check if quest duration is over and hasn't shown popup yet
+      if (daysLeft === 0 && !hasShownCompletionPopup(habit.id)) {
+        completedQuestIds.push(habit.id);
+      }
+    });
+
+    if (completedQuestIds.length > 0) {
+      setCompletionQueue(completedQuestIds);
+    }
+  }, [habits]);
+
+  // Process completion queue - show one popup at a time
+  useEffect(() => {
+    if (completionQueue.length > 0 && !showCompletionPopup) {
+      const nextQuestId = completionQueue[0];
+      const result = completeHabit(nextQuestId);
+
+      if (result) {
+        setCurrentCompletion({
+          questName: result.habit.label,
+          questEmoji: result.habit.emoji,
+          questColor: result.habit.color,
+          daysCompleted: result.stats.daysCompleted,
+          daysMissed: result.stats.daysMissed,
+          highestStreak: result.stats.highestStreak
+        });
+        setShowCompletionPopup(true);
+        setQuestToRemove(nextQuestId);
+        markQuestCompletionShown(nextQuestId);
+      }
+
+      // Remove from queue
+      setCompletionQueue(prev => prev.slice(1));
+    }
+  }, [completionQueue, showCompletionPopup]);
+
   const isToday = (dayIndex: number): boolean => {
     return dayIndex === getTodayIndex();
+  };
+
+  // Calculate days left for a habit
+  const getDaysLeft = (habit: Habit): number => {
+    const createdDate = new Date(habit.createdAt);
+    const today = new Date();
+    const daysPassed = Math.floor((today.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
+    return Math.max(0, habit.duration_days - daysPassed);
   };
 
   const handleCheckboxToggle = (habit: Habit): void => {
@@ -284,6 +350,12 @@ const MainMenu: React.FC = () => {
     }
   };
 
+  const handleCloseCompletionPopup = (): void => {
+    setShowCompletionPopup(false);
+    setCurrentCompletion(null);
+    setQuestToRemove(null);
+  };
+
   const confirmReviveYesterday = (): void => {
     if (reviveConfirmModal.habit) {
       const habit = reviveConfirmModal.habit;
@@ -305,14 +377,6 @@ const MainMenu: React.FC = () => {
       setReviveConfirmModal({ isOpen: false, habit: null });
       setReviveSuccessModal(true);
     }
-  };
-
-  // Calculate days left for a habit
-  const getDaysLeft = (habit: Habit): number => {
-    const createdDate = new Date(habit.createdAt);
-    const today = new Date();
-    const daysPassed = Math.floor((today.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
-    return Math.max(0, habit.duration_days - daysPassed);
   };
 
   // Check if yesterday is eligible for revival
@@ -424,7 +488,7 @@ const MainMenu: React.FC = () => {
           return (
             <div
               key={habit.id}
-              className={`habit-card ${completedHabitId === habit.id ? 'completed-animation' : ''}`}
+              className={`habit-card ${completedHabitId === habit.id ? 'completed-animation' : ''} ${questToRemove === habit.id ? 'removing' : ''}`}
               style={{ borderLeftColor: habit.color }}
               onMouseDown={() => handleLongPressStart(habit)}
               onMouseUp={handleLongPressEnd}
@@ -646,6 +710,20 @@ const MainMenu: React.FC = () => {
         icon={privacyChangeModal.habit?.isPrivate ? '👥' : '🔒'}
         type="warning"
       />
+
+      {/* Quest Completion Congratulations Popup */}
+      {currentCompletion && (
+        <QuestCompletionCongrats
+          isOpen={showCompletionPopup}
+          onClose={handleCloseCompletionPopup}
+          questName={currentCompletion.questName}
+          questEmoji={currentCompletion.questEmoji}
+          questColor={currentCompletion.questColor}
+          daysCompleted={currentCompletion.daysCompleted}
+          daysMissed={currentCompletion.daysMissed}
+          highestStreak={currentCompletion.highestStreak}
+        />
+      )}
     </div>
   );
 };

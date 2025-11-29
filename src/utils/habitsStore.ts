@@ -65,24 +65,27 @@ export const updateHabit = (id: string, updates: Partial<Habit>): void => {
 };
 
 // Calculate quest statistics from logs
-const calculateQuestStats = (habitId: string, durationDays: number): { highestStreak: number; daysCompleted: number; daysMissed: number; totalDays: number } => {
+const calculateQuestStats = (habitId: string, durationDays: number, createdAt: string): { highestStreak: number; daysCompleted: number; daysMissed: number; totalDays: number } => {
   const logs = getHabitLogs().filter(log => String(log.habitId) === String(habitId));
 
-  // Calculate highest streak
+  // Calculate highest streak by going through ALL logs chronologically
   let highestStreak = 0;
   let currentStreak = 0;
 
-  // Get all dates from habit creation to now
+  // Build complete date range from creation to now
+  const createdDate = new Date(createdAt);
   const today = new Date();
-  const completedDates = new Set(logs.filter(log => log.completed).map(log => log.date));
+  const allDates: string[] = [];
 
-  // Calculate streak by checking consecutive days
-  for (let i = 0; i < durationDays; i++) {
-    const checkDate = new Date(today);
-    checkDate.setDate(today.getDate() - i);
-    const dateString = formatDate(checkDate.getFullYear(), checkDate.getMonth(), checkDate.getDate());
+  for (let d = new Date(createdDate); d <= today; d.setDate(d.getDate() + 1)) {
+    allDates.push(formatDate(d.getFullYear(), d.getMonth(), d.getDate()));
+  }
 
-    if (completedDates.has(dateString)) {
+  // Calculate highest streak
+  for (const dateString of allDates) {
+    const log = logs.find(l => l.date === dateString);
+
+    if (log && log.completed) {
       currentStreak++;
       highestStreak = Math.max(highestStreak, currentStreak);
     } else {
@@ -90,16 +93,64 @@ const calculateQuestStats = (habitId: string, durationDays: number): { highestSt
     }
   }
 
-  // Count completed and missed days
+  // Count completed days
   const daysCompleted = logs.filter(log => log.completed).length;
-  const totalDays = Math.min(durationDays, Math.ceil((today.getTime() - new Date(logs[0]?.date || today).getTime()) / (1000 * 60 * 60 * 24)));
-  const daysMissed = Math.max(0, totalDays - daysCompleted);
+
+  // Count days missed: only days that exist in logs but are NOT completed
+  const daysMissed = logs.filter(log => !log.completed).length;
+
+  // Total days is the duration
+  const totalDays = durationDays;
 
   return {
     highestStreak,
     daysCompleted,
     daysMissed,
-    totalDays: durationDays
+    totalDays
+  };
+};
+
+// Complete habit (when duration is over) and move to history
+export const completeHabit = (id: string): { stats: { highestStreak: number; daysCompleted: number; daysMissed: number }; habit: Habit } | null => {
+  const habits = getHabits();
+  const habitToComplete = habits.find(h => h.id === id);
+
+  if (!habitToComplete) {
+    return null;
+  }
+
+  // Calculate quest statistics
+  const stats = calculateQuestStats(id, habitToComplete.duration_days, habitToComplete.createdAt);
+
+  // Create history entry
+  const historyEntry: QuestHistoryEntry = {
+    id: habitToComplete.id,
+    label: habitToComplete.label,
+    emoji: habitToComplete.emoji,
+    color: habitToComplete.color,
+    trackingType: habitToComplete.trackingType,
+    highestStreak: stats.highestStreak,
+    daysCompleted: stats.daysCompleted,
+    daysMissed: stats.daysMissed,
+    totalDays: stats.totalDays,
+    completedAt: new Date().toISOString(),
+    target_amount: habitToComplete.target_amount,
+    unit: habitToComplete.unit
+  };
+
+  // Save to history
+  addQuestToHistory(historyEntry);
+
+  // Remove from active habits
+  setHabits(habits.filter(h => h.id !== id));
+
+  return {
+    stats: {
+      highestStreak: stats.highestStreak,
+      daysCompleted: stats.daysCompleted,
+      daysMissed: stats.daysMissed
+    },
+    habit: habitToComplete
   };
 };
 
@@ -110,7 +161,7 @@ export const deleteHabit = (id: string): void => {
 
   if (habitToDelete) {
     // Calculate quest statistics before deletion
-    const stats = calculateQuestStats(id, habitToDelete.duration_days);
+    const stats = calculateQuestStats(id, habitToDelete.duration_days, habitToDelete.createdAt);
 
     // Create history entry
     const historyEntry: QuestHistoryEntry = {

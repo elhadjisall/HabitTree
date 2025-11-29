@@ -1,0 +1,224 @@
+.congrats-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: var(--spacing-md);
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.congrats-content {
+  background: var(--bg-primary);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 450px;
+  width: 100%;
+  padding: var(--spacing-xl);
+  position: relative;
+  animation: slideUp 0.4s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.congrats-close {
+  position: absolute;
+  top: var(--spacing-md);
+  right: var(--spacing-md);
+  background: transparent;
+  border: none;
+  font-size: 2rem;
+  color: var(--fg-secondary);
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all var(--transition-base);
+}
+
+.congrats-close:hover {
+  background: var(--bg-tertiary);
+  color: var(--fg-primary);
+  transform: rotate(90deg);
+}
+
+.congrats-header {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.congrats-title {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #6ab04c, #4a90e2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: celebration 0.6s ease;
+}
+
+@keyframes celebration {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.congrats-subtitle {
+  margin: var(--spacing-xs) 0 0;
+  color: var(--fg-secondary);
+  font-size: var(--font-size-lg);
+}
+
+.congrats-quest-info {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.congrats-quest-emoji {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  margin: 0 auto var(--spacing-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  border: 4px solid white;
+  animation: bounce 0.6s ease;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.congrats-quest-name {
+  margin: 0;
+  color: var(--fg-primary);
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+}
+
+.congrats-stats {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+}
+
+.congrats-stat-card {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-base);
+}
+
+.congrats-stat-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.congrats-stat-card.highlight {
+  background: linear-gradient(135deg, rgba(106, 176, 76, 0.1), rgba(74, 144, 226, 0.1));
+  border: 2px solid var(--accent-primary);
+}
+
+.stat-icon-large {
+  font-size: 2.5rem;
+  flex-shrink: 0;
+}
+
+.stat-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--fg-primary);
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: var(--font-size-base);
+  color: var(--fg-secondary);
+  margin-top: var(--spacing-xs);
+}
+
+.congrats-footer {
+  text-align: center;
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+}
+
+.congrats-footer p {
+  margin: 0;
+  color: var(--fg-secondary);
+  font-size: var(--font-size-sm);
+}
+
+/* Mobile optimization */
+@media (max-width: 640px) {
+  .congrats-content {
+    padding: var(--spacing-lg);
+  }
+
+  .congrats-title {
+    font-size: 1.75rem;
+  }
+
+  .congrats-quest-emoji {
+    width: 80px;
+    height: 80px;
+    font-size: 3rem;
+  }
+
+  .stat-number {
+    font-size: 1.5rem;
+  }
+
+  .stat-icon-large {
+    font-size: 2rem;
+  }
+}
