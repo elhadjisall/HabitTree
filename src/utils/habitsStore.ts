@@ -96,8 +96,12 @@ const calculateQuestStats = (habitId: string, durationDays: number, createdAt: s
   // Count completed days
   const daysCompleted = logs.filter(log => log.completed).length;
 
-  // Count days missed: only days that exist in logs but are NOT completed
-  const daysMissed = logs.filter(log => !log.completed).length;
+  // Count days missed: all past days (up to today) that were NOT completed
+  // This includes days with explicit incomplete logs AND days with no logs at all
+  const daysMissed = allDates.filter(dateString => {
+    const log = logs.find(l => l.date === dateString);
+    return !log || !log.completed;
+  }).length;
 
   // Total days is the duration
   const totalDays = durationDays;

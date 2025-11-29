@@ -12,12 +12,12 @@
 .journey-title {
   margin: 0 0 var(--spacing-xs) 0;
   color: white;
-  background: linear-gradient(135deg, #6ab04c, #4a90e2);
+  background: linear-gradient(135deg, var(--theme-deep-forest), var(--theme-evergreen));
   padding: var(--spacing-sm) var(--spacing-xl);
   border-radius: var(--radius-full);
   font-size: var(--font-size-2xl);
   font-weight: 700;
-  box-shadow: 0 4px 12px rgba(106, 176, 76, 0.3);
+  box-shadow: 0 4px 12px rgba(10, 38, 2, 0.3);
   display: inline-block;
   letter-spacing: 0.5px;
 }

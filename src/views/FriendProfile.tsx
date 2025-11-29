@@ -143,6 +143,7 @@ const MockCurrentQuestsPopup: React.FC<MockCurrentQuestsProps> = ({ isOpen, onCl
                         }}
                       />
                     </div>
+                    <span className="quest-progress-text">{quest.progress}%</span>
                   </div>
                   <div className="quest-streak">
                     <span className="streak-icon">🔥</span>

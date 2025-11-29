@@ -14,6 +14,22 @@
   z-index: var(--z-nav);
 }
 
+/* Vine decoration on top border */
+.bottom-nav::before {
+  content: '🌿🍃🌿🍃🌿🍃🌿🍃🌿🍃🌿🍃🌿🍃🌿🍃🌿🍃🌿';
+  position: absolute;
+  top: -12px;
+  left: 0;
+  right: 0;
+  font-size: 1.2rem;
+  text-align: center;
+  letter-spacing: 0.5rem;
+  opacity: 0.6;
+  pointer-events: none;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
 .nav-item {
   display: flex;
   flex-direction: column;
@@ -63,7 +79,7 @@
 /* Create button (center) special styling */
 .nav-item-create {
   position: relative;
-  bottom: 10px;
+  bottom: 2px;
   background: linear-gradient(135deg, var(--accent-primary), var(--accent-success));
   color: white;
   width: 56px;
@@ -140,6 +156,6 @@
   .nav-item-create {
     width: 72px;
     height: 72px;
-    bottom: 15px;
+    bottom: 5px;
   }
 }

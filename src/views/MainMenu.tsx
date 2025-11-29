@@ -37,6 +37,15 @@ const MainMenu: React.FC = () => {
     return day === 0 ? 6 : day - 1; // Convert Sunday (0) to 6, Monday (1) to 0, etc.
   };
 
+  // Get the date for a given weekday index
+  const getDateForWeekday = (index: number): number => {
+    const today = new Date();
+    const dayOffset = index - getTodayIndex();
+    const targetDate = new Date(today);
+    targetDate.setDate(today.getDate() + dayOffset);
+    return targetDate.getDate();
+  };
+
   const habits = useHabits(); // Get habits from store
   const [habitStates, setHabitStates] = useState<Record<string, HabitUIState>>({});
   const [selectedDay, setSelectedDay] = useState<number>(getTodayIndex());
@@ -468,6 +477,7 @@ const MainMenu: React.FC = () => {
             onClick={() => setSelectedDay(index)}
           >
             <span className="weekday-label">{day}</span>
+            <span className="weekday-date">{getDateForWeekday(index)}</span>
             <span className="weekday-indicator"></span>
           </button>
         ))}
