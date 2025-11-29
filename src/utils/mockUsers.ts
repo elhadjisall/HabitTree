@@ -2,9 +2,21 @@
 
 export interface MockHabit {
   name: string;
+  emoji: string;
+  color: string;
   streak: number;
   progress: number;
   isPrivate: boolean;
+}
+
+export interface MockQuestHistory {
+  id: string;
+  label: string;
+  emoji: string;
+  color: string;
+  highestStreak: number;
+  daysCompleted: number;
+  daysMissed: number;
 }
 
 export interface MockUser {
@@ -13,6 +25,8 @@ export interface MockUser {
   publicHabits: MockHabit[];
   privateHabits: MockHabit[];
   characters: string[]; // All owned character emojis
+  companionSlots: string[]; // Up to 8 characters to display
+  questHistory: MockQuestHistory[]; // Completed quests
 }
 
 export const MOCK_USERS: MockUser[] = [
@@ -20,32 +34,43 @@ export const MOCK_USERS: MockUser[] = [
     username: '@samurai_jake',
     avatar: '🥷',
     publicHabits: [
-      { name: 'Meditation', streak: 12, progress: 40, isPrivate: false },
-      { name: 'Reading', streak: 7, progress: 20, isPrivate: false },
+      { name: 'Meditation', emoji: '🧘', color: '#9b59b6', streak: 12, progress: 40, isPrivate: false },
+      { name: 'Reading', emoji: '📚', color: '#3498db', streak: 7, progress: 20, isPrivate: false },
     ],
     privateHabits: [
-      { name: 'No Sugar', streak: 5, progress: 15, isPrivate: true },
+      { name: 'No Sugar', emoji: '🚫', color: '#e74c3c', streak: 5, progress: 15, isPrivate: true },
     ],
-    characters: ['🥷', '🦊'],
+    characters: ['🥷', '🦊', '🦌', '🐰'],
+    companionSlots: ['🥷', '🦊', '🦌', '🐰', '', '', '', ''],
+    questHistory: [
+      { id: 'hist_1', label: 'Morning Workout', emoji: '💪', color: '#e67e22', highestStreak: 15, daysCompleted: 25, daysMissed: 5 },
+      { id: 'hist_2', label: 'Journaling', emoji: '📝', color: '#1abc9c', highestStreak: 20, daysCompleted: 28, daysMissed: 2 },
+    ],
   },
   {
     username: '@moonwalker',
     avatar: '🦊',
     publicHabits: [
-      { name: 'Running', streak: 3, progress: 10, isPrivate: false },
+      { name: 'Running', emoji: '🏃', color: '#e74c3c', streak: 3, progress: 10, isPrivate: false },
     ],
     privateHabits: [],
-    characters: ['🦊', '🐢'],
+    characters: ['🦊', '🐢', '🦉'],
+    companionSlots: ['🦊', '🐢', '🦉', '', '', '', '', ''],
+    questHistory: [
+      { id: 'hist_3', label: 'Drink Water', emoji: '💧', color: '#3498db', highestStreak: 10, daysCompleted: 20, daysMissed: 10 },
+    ],
   },
   {
     username: '@kitsune',
     avatar: '🦊',
     publicHabits: [
-      { name: 'Practice Japanese', streak: 22, progress: 73, isPrivate: false },
-      { name: 'Wake Up Early', streak: 9, progress: 30, isPrivate: false },
+      { name: 'Practice Japanese', emoji: '🇯🇵', color: '#e91e63', streak: 22, progress: 73, isPrivate: false },
+      { name: 'Wake Up Early', emoji: '⏰', color: '#ff9800', streak: 9, progress: 30, isPrivate: false },
     ],
     privateHabits: [],
-    characters: ['🦊', '🥷'],
+    characters: ['🦊', '🥷', '🐉'],
+    companionSlots: ['🦊', '🥷', '🐉', '', '', '', '', ''],
+    questHistory: [],
   },
 ];
 

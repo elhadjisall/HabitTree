@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import './Settings.css';
 import { getDarkMode, setDarkMode } from '../utils/darkModeStorage';
 import { getUserProfile, updateUsername, updateAvatar, getUnlockedCharacterEmojis } from '../utils/charactersStorage';
+import { getCompanionSlots, setCompanionSlots, getMaxCompanionSlots } from '../utils/companionSlotsStorage';
+import { useHabits } from '../hooks/useHabits';
+import QuestCompletionPopup from '../components/QuestCompletionPopup';
+import QuestHistory from './QuestHistory';
 
 interface ProfileState {
   username: string;
@@ -25,6 +29,7 @@ interface FormDataState {
 
 const Settings: React.FC = () => {
   const userProfile = getUserProfile();
+  const habits = useHabits();
   const [profile, setProfile] = useState<ProfileState>({
     username: userProfile.username,
     email: 'user@example.com',
@@ -46,6 +51,22 @@ const Settings: React.FC = () => {
   });
 
   const [isDarkMode, setIsDarkMode] = useState<boolean>(getDarkMode());
+  const [companionSlots, setCompanionSlotsState] = useState<string[]>([]);
+  const [showProfilePicturePicker, setShowProfilePicturePicker] = useState<boolean>(false);
+  const [showCompanionPicker, setShowCompanionPicker] = useState<boolean>(false);
+  const [selectedSlotIndex, setSelectedSlotIndex] = useState<number | null>(null);
+  const [showCurrentQuests, setShowCurrentQuests] = useState<boolean>(false);
+  const [showQuestHistory, setShowQuestHistory] = useState<boolean>(false);
+
+  useEffect(() => {
+    // Load companion slots
+    const slots = getCompanionSlots();
+    // Ensure we always have 8 slots
+    while (slots.length < getMaxCompanionSlots()) {
+      slots.push('');
+    }
+    setCompanionSlotsState(slots);
+  }, []);
 
   useEffect(() => {
     // Listen for dark mode changes from other tabs/windows
@@ -100,6 +121,23 @@ const Settings: React.FC = () => {
   const handleProfilePictureChange = (emoji: string): void => {
     setProfile({ ...profile, profilePicture: emoji });
     updateAvatar(emoji);
+    setShowProfilePicturePicker(false);
+  };
+
+  const handleCompanionSlotClick = (index: number): void => {
+    setSelectedSlotIndex(index);
+    setShowCompanionPicker(true);
+  };
+
+  const handleCompanionSelect = (emoji: string): void => {
+    if (selectedSlotIndex !== null) {
+      const newSlots = [...companionSlots];
+      newSlots[selectedSlotIndex] = emoji;
+      setCompanionSlotsState(newSlots);
+      setCompanionSlots(newSlots);
+    }
+    setShowCompanionPicker(false);
+    setSelectedSlotIndex(null);
   };
 
   const handleLogout = (): void => {
@@ -118,30 +156,56 @@ const Settings: React.FC = () => {
   // Get only unlocked characters for profile picture selection
   const PROFILE_EMOJIS = getUnlockedCharacterEmojis();
 
+  // Get public habits for current quests view
+  const publicHabits = habits.filter(habit => !habit.isPrivate);
+
   return (
     <div className="settings">
       <header className="settings-header">
         <h1>Settings</h1>
       </header>
 
-      {/* Profile picture */}
-      <section className="profile-section">
-        <div className="profile-picture-container">
-          <div className="profile-picture">{profile.profilePicture}</div>
-          <div className="emoji-picker">
-            {PROFILE_EMOJIS.map(emoji => (
-              <button
-                key={emoji}
-                className={`emoji-option ${profile.profilePicture === emoji ? 'active' : ''}`}
-                onClick={() => handleProfilePictureChange(emoji)}
-                aria-label={`Select ${emoji} as profile picture`}
+      {/* Profile and Companions Section */}
+      <section className="profile-companions-section">
+        <div className="profile-picture-wrapper">
+          <div
+            className="profile-picture-small"
+            onClick={() => setShowProfilePicturePicker(true)}
+          >
+            {profile.profilePicture}
+          </div>
+          <h2 className="profile-username">{profile.username}</h2>
+        </div>
+
+        <div className="companions-wrapper">
+          <h3 className="companions-heading">Companions</h3>
+          <div className="companions-grid">
+            {companionSlots.map((emoji, index) => (
+              <div
+                key={index}
+                className={`companion-slot ${emoji ? 'filled' : 'empty'}`}
+                onClick={() => handleCompanionSlotClick(index)}
               >
-                {emoji}
-              </button>
+                {emoji || ''}
+              </div>
             ))}
           </div>
         </div>
-        <h2 className="profile-username">{profile.username}</h2>
+
+        <div className="quest-buttons">
+          <button
+            className="btn btn-primary quest-btn"
+            onClick={() => setShowCurrentQuests(true)}
+          >
+            View Current Quests
+          </button>
+          <button
+            className="btn btn-secondary quest-btn"
+            onClick={() => setShowQuestHistory(true)}
+          >
+            Quest History
+          </button>
+        </div>
       </section>
 
       {/* Settings sections */}
@@ -293,6 +357,66 @@ const Settings: React.FC = () => {
           <p>Made with 💚 for better habits</p>
         </section>
       </div>
+
+      {/* Profile Picture Picker Modal */}
+      {showProfilePicturePicker && (
+        <div className="picker-overlay" onClick={() => setShowProfilePicturePicker(false)}>
+          <div className="picker-content" onClick={(e) => e.stopPropagation()}>
+            <h3>Select Profile Picture</h3>
+            <div className="emoji-grid">
+              {PROFILE_EMOJIS.map(emoji => (
+                <button
+                  key={emoji}
+                  className={`emoji-option ${profile.profilePicture === emoji ? 'active' : ''}`}
+                  onClick={() => handleProfilePictureChange(emoji)}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Companion Picker Modal */}
+      {showCompanionPicker && (
+        <div className="picker-overlay" onClick={() => setShowCompanionPicker(false)}>
+          <div className="picker-content" onClick={(e) => e.stopPropagation()}>
+            <h3>Select Companion</h3>
+            <div className="emoji-grid">
+              <button
+                className="emoji-option"
+                onClick={() => handleCompanionSelect('')}
+              >
+                ❌
+              </button>
+              {PROFILE_EMOJIS.map(emoji => (
+                <button
+                  key={emoji}
+                  className={`emoji-option ${selectedSlotIndex !== null && companionSlots[selectedSlotIndex] === emoji ? 'active' : ''}`}
+                  onClick={() => handleCompanionSelect(emoji)}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Current Quests Popup */}
+      <QuestCompletionPopup
+        isOpen={showCurrentQuests}
+        onClose={() => setShowCurrentQuests(false)}
+        quests={publicHabits}
+        title="Current Quests"
+      />
+
+      {/* Quest History */}
+      <QuestHistory
+        isOpen={showQuestHistory}
+        onClose={() => setShowQuestHistory(false)}
+      />
     </div>
   );
 };
