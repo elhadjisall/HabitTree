@@ -3,43 +3,73 @@ import './TreeCharacter.css';
 import { getLeafDollars, setLeafDollars } from '../utils/leafDollarsStorage';
 import { useHabits } from '../hooks/useHabits';
 import { getHabitLogs } from '../utils/habitLogsStore';
-
-interface Character {
-  id: number;
-  name: string;
-  emoji: string;
-  unlocked: boolean;
-  cost: number;
-}
-
-const BASE_CHARACTERS: Character[] = [
-  { id: 1, name: 'Forest Fox', emoji: '🦊', unlocked: true, cost: 0 },
-  { id: 2, name: 'Wise Owl', emoji: '🦉', unlocked: true, cost: 0 },
-  { id: 3, name: 'Garden Rabbit', emoji: '🐰', unlocked: false, cost: 500 },
-  { id: 4, name: 'Mountain Deer', emoji: '🦌', unlocked: false, cost: 750 },
-  { id: 5, name: 'River Turtle', emoji: '🐢', unlocked: false, cost: 1000 },
-  { id: 6, name: 'Sky Dragon', emoji: '🐉', unlocked: false, cost: 2000 },
-];
+import {
+  BASE_CHARACTERS,
+  getUnlockedCharacters,
+  getSelectedCharacter,
+  updateAvatar,
+  type Character
+} from '../utils/charactersStorage';
+import { useRive } from '@rive-app/react-canvas';
 
 const UNLOCKED_CHARACTERS_KEY = 'unlockedCharacters';
 
+// Rive Character Animation Component
+interface RiveCharacterProps {
+  src: string;
+  characterName: string;
+}
+
+const RiveCharacter: React.FC<RiveCharacterProps> = ({ src, characterName }) => {
+  const { RiveComponent } = useRive({
+    src: src,
+    autoplay: true,
+  });
+
+  return <RiveComponent className="character-rive" />;
+};
+
+// Rive Tree Animation Component
+interface RiveTreeProps {
+  level: number;
+}
+
+const RiveTree: React.FC<RiveTreeProps> = ({ level }) => {
+  const { RiveComponent } = useRive({
+    src: `/assets/trees/tree-level-${level}.riv`,
+    autoplay: true,
+  });
+
+  return <RiveComponent className="tree-rive" />;
+};
+
+// Get tree level based on progress (0-10%, 11-20%, ..., 91-100%)
+const getTreeLevel = (progress: number): number => {
+  if (progress <= 10) return 0;
+  if (progress <= 20) return 1;
+  if (progress <= 30) return 2;
+  if (progress <= 40) return 3;
+  if (progress <= 50) return 4;
+  if (progress <= 60) return 5;
+  if (progress <= 70) return 6;
+  if (progress <= 80) return 7;
+  if (progress <= 90) return 8;
+  return 9;
+};
+
 // Load unlocked characters from localStorage
 const loadUnlockedCharacters = (): Character[] => {
-  const stored = localStorage.getItem(UNLOCKED_CHARACTERS_KEY);
-  if (stored) {
-    const unlockedIds = JSON.parse(stored) as number[];
-    return BASE_CHARACTERS.map(char => ({
-      ...char,
-      unlocked: char.unlocked || unlockedIds.includes(char.id)
-    }));
-  }
-  return BASE_CHARACTERS;
+  return getUnlockedCharacters();
 };
 
 // Save unlocked characters to localStorage
-const saveUnlockedCharacters = (characters: Character[]): void => {
-  const unlockedIds = characters.filter(c => c.unlocked && c.cost > 0).map(c => c.id);
-  localStorage.setItem(UNLOCKED_CHARACTERS_KEY, JSON.stringify(unlockedIds));
+const saveUnlockedCharacters = (characterId: number): void => {
+  const stored = localStorage.getItem(UNLOCKED_CHARACTERS_KEY);
+  const unlockedIds = stored ? JSON.parse(stored) as number[] : [];
+  if (!unlockedIds.includes(characterId)) {
+    unlockedIds.push(characterId);
+    localStorage.setItem(UNLOCKED_CHARACTERS_KEY, JSON.stringify(unlockedIds));
+  }
 };
 
 const TreeCharacter: React.FC = () => {
@@ -62,7 +92,7 @@ const TreeCharacter: React.FC = () => {
   // Persist selected character to localStorage
   const handleCharacterChange = (characterId: number) => {
     setSelectedCharacter(characterId);
-    localStorage.setItem('selectedCharacter', characterId.toString());
+    updateAvatar(characterId);
   };
 
   // Calculate progress for selected habit
@@ -87,11 +117,9 @@ const TreeCharacter: React.FC = () => {
       const newBalance = leafDollarsState - cost;
       setLeafDollars(newBalance);
       setLeafDollarsState(newBalance);
-      const updatedCharacters = characters.map(c =>
-        c.id === characterId ? { ...c, unlocked: true } : c
-      );
-      setCharacters(updatedCharacters);
-      saveUnlockedCharacters(updatedCharacters); // Persist to localStorage
+      saveUnlockedCharacters(characterId); // Persist to localStorage
+      // Reload characters to reflect the update
+      setCharacters(loadUnlockedCharacters());
       alert('Character unlocked! 🎉');
       setShowShop(false);
     } else {
@@ -129,7 +157,7 @@ const TreeCharacter: React.FC = () => {
           >
             {unlockedCharacters.map(character => (
               <option key={character.id} value={character.id}>
-                {character.emoji} {character.name}
+                {character.name}
               </option>
             ))}
           </select>
@@ -147,7 +175,7 @@ const TreeCharacter: React.FC = () => {
               {/* Tree on the left */}
               <div className="tree-container">
                 <div className="tree-placeholder">
-                  <div className="tree-emoji">🌳</div>
+                  <RiveTree key={getTreeLevel(currentProgress)} level={getTreeLevel(currentProgress)} />
                   <div className="tree-growth-bar">
                     <div
                       className="tree-growth-fill"
@@ -159,9 +187,19 @@ const TreeCharacter: React.FC = () => {
               </div>
 
               {/* Character on the right */}
-              <div className="character-container">
+              <div className="character-container" style={{
+                backgroundImage: currentCharacter ? `url(${currentCharacter.backgroundPath})` : 'none',
+                backgroundSize: 'contain',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat'
+              }}>
                 <div className="character-placeholder">
-                  <div className="character-emoji">{currentCharacter?.emoji}</div>
+                  {currentCharacter && (
+                    <RiveCharacter
+                      src={currentCharacter.animatedRivePath}
+                      characterName={currentCharacter.name}
+                    />
+                  )}
                   <p className="character-name">{currentCharacter?.name}</p>
                 </div>
               </div>
@@ -217,7 +255,9 @@ const TreeCharacter: React.FC = () => {
                   key={character.id}
                   className={`shop-item ${character.unlocked ? 'unlocked' : ''}`}
                 >
-                  <div className="shop-item-icon">{character.emoji}</div>
+                  <div className="shop-item-icon">
+                    <img src={character.iconPath} alt={character.name} className="shop-character-icon" />
+                  </div>
                   <div className="shop-item-info">
                     <h3>{character.name}</h3>
                     {character.unlocked ? (

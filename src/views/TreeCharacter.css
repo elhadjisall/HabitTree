@@ -151,6 +151,19 @@
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
 }
 
+.tree-svg {
+  width: 200px;
+  height: 200px;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+  object-fit: contain;
+}
+
+.tree-rive {
+  width: 200px;
+  height: 200px;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+}
+
 .tree-growth-bar {
   width: 200px;
   height: 16px;
@@ -196,6 +209,25 @@
 
 .character-emoji {
   font-size: 5rem;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+}
+
+.character-svg {
+  width: 180px;
+  height: 180px;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+}
+
+.character-fallback {
+  width: 180px;
+  height: 180px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+}
+
+.character-rive {
+  width: 180px;
+  height: 180px;
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
 }
 
@@ -377,6 +409,12 @@
 
 .shop-item-icon {
   font-size: 3rem;
+}
+
+.shop-character-icon {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
 }
 
 .shop-item-info {

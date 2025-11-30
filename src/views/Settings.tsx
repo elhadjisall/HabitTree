@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './Settings.css';
 import { getDarkMode, setDarkMode } from '../utils/darkModeStorage';
-import { getUserProfile, updateUsername, updateAvatar, getUnlockedCharacterEmojis } from '../utils/charactersStorage';
+import { getUserProfile, updateUsername, updateAvatar, getUnlockedCharacters, getCharacterById, type Character } from '../utils/charactersStorage';
 import { getCompanionSlots, setCompanionSlots, getMaxCompanionSlots } from '../utils/companionSlotsStorage';
 import { useHabits } from '../hooks/useHabits';
 import QuestCompletionPopup from '../components/QuestCompletionPopup';
@@ -118,10 +118,13 @@ const Settings: React.FC = () => {
     setEditMode({ ...editMode, [field]: false });
   };
 
-  const handleProfilePictureChange = (emoji: string): void => {
-    setProfile({ ...profile, profilePicture: emoji });
-    updateAvatar(emoji);
-    setShowProfilePicturePicker(false);
+  const handleProfilePictureChange = (characterId: number): void => {
+    const character = getCharacterById(characterId);
+    if (character) {
+      setProfile({ ...profile, profilePicture: character.iconPath });
+      updateAvatar(characterId);
+      setShowProfilePicturePicker(false);
+    }
   };
 
   const handleCompanionSlotClick = (index: number): void => {
@@ -129,10 +132,10 @@ const Settings: React.FC = () => {
     setShowCompanionPicker(true);
   };
 
-  const handleCompanionSelect = (emoji: string): void => {
+  const handleCompanionSelect = (iconPath: string): void => {
     if (selectedSlotIndex !== null) {
       const newSlots = [...companionSlots];
-      newSlots[selectedSlotIndex] = emoji;
+      newSlots[selectedSlotIndex] = iconPath;
       setCompanionSlotsState(newSlots);
       setCompanionSlots(newSlots);
     }
@@ -154,7 +157,7 @@ const Settings: React.FC = () => {
   };
 
   // Get only unlocked characters for profile picture selection
-  const PROFILE_EMOJIS = getUnlockedCharacterEmojis();
+  const unlockedCharacters = getUnlockedCharacters();
 
   // Get public habits for current quests view
   const publicHabits = habits.filter(habit => !habit.isPrivate);
@@ -172,7 +175,7 @@ const Settings: React.FC = () => {
             className="profile-picture-small"
             onClick={() => setShowProfilePicturePicker(true)}
           >
-            {profile.profilePicture}
+            <img src={profile.profilePicture} alt="Profile" style={{width: '100%', height: '100%', objectFit: 'cover'}} />
           </div>
           <h2 className="profile-username">{profile.username}</h2>
         </div>
@@ -180,13 +183,13 @@ const Settings: React.FC = () => {
         <div className="companions-wrapper">
           <h3 className="companions-heading">Companions</h3>
           <div className="companions-grid">
-            {companionSlots.map((emoji, index) => (
+            {companionSlots.map((iconPath, index) => (
               <div
                 key={index}
-                className={`companion-slot ${emoji ? 'filled' : 'empty'}`}
+                className={`companion-slot ${iconPath ? 'filled' : 'empty'}`}
                 onClick={() => handleCompanionSlotClick(index)}
               >
-                {emoji || ''}
+                {iconPath && <img src={iconPath} alt={`Companion ${index + 1}`} style={{width: '100%', height: '100%', objectFit: 'cover'}} />}
               </div>
             ))}
           </div>
@@ -364,13 +367,13 @@ const Settings: React.FC = () => {
           <div className="picker-content" onClick={(e) => e.stopPropagation()}>
             <h3>Select Profile Picture</h3>
             <div className="emoji-grid">
-              {PROFILE_EMOJIS.map(emoji => (
+              {unlockedCharacters.map(character => (
                 <button
-                  key={emoji}
-                  className={`emoji-option ${profile.profilePicture === emoji ? 'active' : ''}`}
-                  onClick={() => handleProfilePictureChange(emoji)}
+                  key={character.id}
+                  className={`emoji-option ${profile.profilePicture === character.iconPath ? 'active' : ''}`}
+                  onClick={() => handleProfilePictureChange(character.id)}
                 >
-                  {emoji}
+                  <img src={character.iconPath} alt={character.name} style={{width: '100%', height: '100%', objectFit: 'cover'}} />
                 </button>
               ))}
             </div>
@@ -390,13 +393,13 @@ const Settings: React.FC = () => {
               >
                 ❌
               </button>
-              {PROFILE_EMOJIS.map(emoji => (
+              {unlockedCharacters.map(character => (
                 <button
-                  key={emoji}
-                  className={`emoji-option ${selectedSlotIndex !== null && companionSlots[selectedSlotIndex] === emoji ? 'active' : ''}`}
-                  onClick={() => handleCompanionSelect(emoji)}
+                  key={character.id}
+                  className={`emoji-option ${selectedSlotIndex !== null && companionSlots[selectedSlotIndex] === character.iconPath ? 'active' : ''}`}
+                  onClick={() => handleCompanionSelect(character.iconPath)}
                 >
-                  {emoji}
+                  <img src={character.iconPath} alt={character.name} style={{width: '100%', height: '100%', objectFit: 'cover'}} />
                 </button>
               ))}
             </div>

@@ -7,21 +7,11 @@ import { useHabits } from '../hooks/useHabits';
 import { calculateStreak } from '../utils/streakCalculation';
 import { deleteHabit, updateHabit, completeHabit, type Habit } from '../utils/habitsStore';
 import { hasShownCompletionPopup, markQuestCompletionShown } from '../utils/completedQuestsStorage';
+import { getSelectedCharacter, getRandomDialogue, initializeFirstCharacter } from '../utils/charactersStorage';
 import ConfirmModal from '../components/ConfirmModal';
 import QuestCompletionCongrats from '../components/QuestCompletionCongrats';
 
 const WEEKDAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-
-const MOTIVATIONAL_MESSAGES = [
-  "You've got this! 💪",
-  "Keep up the great work!",
-  "One step at a time! 🌟",
-  "I believe in you!",
-  "Progress over perfection!",
-  "You're doing amazing! ✨",
-  "Stay consistent! 🔥",
-  "Every day counts!"
-];
 
 interface HabitUIState {
   id: string;
@@ -77,23 +67,10 @@ const MainMenu: React.FC = () => {
   } | null>(null);
   const [questToRemove, setQuestToRemove] = useState<string | null>(null);
 
-  // Get selected character from localStorage
-  const getSelectedCharacter = (): string => {
-    const storedCharacterId = localStorage.getItem('selectedCharacter');
-    const characterId = storedCharacterId ? parseInt(storedCharacterId) : 1;
-
-    const characters = [
-      { id: 1, emoji: '🦊' },
-      { id: 2, emoji: '🦉' },
-      { id: 3, emoji: '🐰' },
-      { id: 4, emoji: '🦌' },
-      { id: 5, emoji: '🐢' },
-      { id: 6, emoji: '🐉' },
-    ];
-
-    const character = characters.find(c => c.id === characterId);
-    return character ? character.emoji : '🦊';
-  };
+  // Initialize first character on mount
+  useEffect(() => {
+    initializeFirstCharacter();
+  }, []);
 
   // Load habit states from logs for selected day
   useEffect(() => {
@@ -123,7 +100,7 @@ const MainMenu: React.FC = () => {
     }
 
     const showMessage = () => {
-      const randomMessage = MOTIVATIONAL_MESSAGES[Math.floor(Math.random() * MOTIVATIONAL_MESSAGES.length)];
+      const randomMessage = getRandomDialogue();
       setCurrentMessage(randomMessage);
       setShowSpeechBubble(true);
 
@@ -460,7 +437,9 @@ const MainMenu: React.FC = () => {
             {showSpeechBubble && (
               <div className="speech-bubble">{currentMessage}</div>
             )}
-            <div className="character-avatar">{getSelectedCharacter()}</div>
+            <div className="character-avatar">
+              <img src={getSelectedCharacter().iconPath} alt={getSelectedCharacter().name} className="character-avatar-img" />
+            </div>
           </div>
         )}
       </header>

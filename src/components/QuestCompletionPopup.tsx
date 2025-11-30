@@ -1,6 +1,7 @@
 import React from 'react';
 import './QuestCompletionPopup.css';
 import { type Habit } from '../utils/habitsStore';
+import { calculateStreak } from '../utils/streakCalculation';
 
 interface QuestCompletionPopupProps {
   isOpen: boolean;
@@ -30,39 +31,42 @@ const QuestCompletionPopup: React.FC<QuestCompletionPopupProps> = ({
             <p className="no-quests-message">No quests to display</p>
           ) : (
             <div className="quest-list">
-              {quests.map((quest) => (
-                <div
-                  key={quest.id}
-                  className="quest-item"
-                  style={{ borderLeft: `4px solid ${quest.color}` }}
-                >
-                  <div className="quest-item-header">
-                    <span className="quest-emoji">{quest.emoji}</span>
-                    <span className="quest-label">{quest.label}</span>
-                  </div>
-
-                  <div className="quest-progress-section">
-                    <div className="quest-progress-bar-container">
-                      <div
-                        className="quest-progress-bar-fill"
-                        style={{
-                          width: `${Math.min(100, (quest.streak / quest.duration_days) * 100)}%`,
-                          backgroundColor: quest.color
-                        }}
-                      />
+              {quests.map((quest) => {
+                const currentStreak = calculateStreak(quest);
+                return (
+                  <div
+                    key={quest.id}
+                    className="quest-item"
+                    style={{ borderLeft: `4px solid ${quest.color}` }}
+                  >
+                    <div className="quest-item-header">
+                      <span className="quest-emoji">{quest.emoji}</span>
+                      <span className="quest-label">{quest.label}</span>
                     </div>
-                    <span className="quest-progress-text">
-                      {quest.streak}/{quest.duration_days} days
-                    </span>
-                  </div>
 
-                  <div className="quest-streak">
-                    <span className="streak-icon">🔥</span>
-                    <span className="streak-number">{quest.streak}</span>
-                    <span className="streak-label">streak</span>
+                    <div className="quest-progress-section">
+                      <div className="quest-progress-bar-container">
+                        <div
+                          className="quest-progress-bar-fill"
+                          style={{
+                            width: `${Math.min(100, (currentStreak / quest.duration_days) * 100)}%`,
+                            backgroundColor: quest.color
+                          }}
+                        />
+                      </div>
+                      <span className="quest-progress-text">
+                        {currentStreak}/{quest.duration_days} days
+                      </span>
+                    </div>
+
+                    <div className="quest-streak">
+                      <span className="streak-icon">🔥</span>
+                      <span className="streak-number">{currentStreak}</span>
+                      <span className="streak-label">streak</span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
