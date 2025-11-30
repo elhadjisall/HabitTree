@@ -17,51 +17,60 @@ def get_today_completion(habit):
         habit: Habit instance
         
     Returns:
-        HabitCompletion or None
+        HabitLog or None
     """
     today = timezone.now().date()
     try:
-        return habit.completions.get(date=today)
-    except habit.completions.model.DoesNotExist:
+        return habit.logs.get(log_date=today)
+    except habit.logs.model.DoesNotExist:
         return None
 
 
-def calculate_leaf_dollars_reward(streak_before, streak_after):
+def calculate_leaf_dollars_reward(streak_before, streak_after, is_completion=True):
     """
-    Calculate leaf dollars reward based on streak increase.
-    Awards leaf dollars when streak increases (completing habit every 24 hours).
+    Calculate leaf dollars reward based on completion and streak milestones.
+    Per spec: "Each completed day gives a small reward"
+    Also awards bonus for streak milestones.
     
     Args:
         streak_before: Streak count before completion
         streak_after: Streak count after completion
+        is_completion: Whether this is a new completion (True) or just streak update (False)
         
     Returns:
         int: Leaf dollars to award
     """
+    reward = 0
+    
+    # Base reward for completing a day (per spec requirement)
+    if is_completion:
+        reward += 1  # Small reward for each completed day
+    
+    # Bonus rewards for streak milestones (in addition to base reward)
     if streak_after > streak_before:
-        # Award leaf dollars based on new streak length
-        # More leaf dollars for longer streaks
-        if streak_after >= 7:
-            return 10  # Bonus for weekly streak
+        if streak_after >= 100:
+            reward += 200  # Bonus for 100-day streak
         elif streak_after >= 30:
-            return 50  # Bonus for monthly streak
-        elif streak_after >= 100:
-            return 200  # Bonus for 100-day streak
-        else:
-            return 5  # Base reward for maintaining/starting streak
-    return 0
+            reward += 50   # Bonus for monthly streak
+        elif streak_after >= 7:
+            reward += 10   # Bonus for weekly streak
+        elif streak_after > 0:
+            reward += 4    # Additional reward for maintaining/starting streak (total 5 with base)
+    
+    return reward
 
 
-def mark_habit_complete(habit, notes=''):
+def mark_habit_complete(habit, notes='', amount_done=None):
     """
     Mark a habit as complete for today and award leaf dollars for streaks.
     
     Args:
         habit: Habit instance
         notes: Optional notes
+        amount_done: Optional amount completed (for count/time tracking modes)
         
     Returns:
-        dict: {'completion': HabitCompletion, 'leaf_dollars_earned': int, 'new_streak': int}
+        dict: {'completion': HabitLog, 'leaf_dollars_earned': int, 'new_streak': int}
     """
     today = timezone.now().date()
     
@@ -69,22 +78,24 @@ def mark_habit_complete(habit, notes=''):
     streak_before = habit.current_streak or 0
     
     # Check if already completed today
-    completion, created = habit.completions.get_or_create(
-        date=today,
-        defaults={'completed': True, 'notes': notes}
+    log, created = habit.logs.get_or_create(
+        log_date=today,
+        defaults={'status': 'completed', 'note': notes, 'amount_done': amount_done}
     )
     
     if not created:
         # If already completed, don't award again
-        if completion.completed:
+        if log.status == 'completed':
             return {
-                'completion': completion,
+                'completion': log,
                 'leaf_dollars_earned': 0,
                 'new_streak': habit.current_streak
             }
-        completion.completed = True
-        completion.notes = notes
-        completion.save()
+        log.status = 'completed'
+        log.note = notes
+        if amount_done is not None:
+            log.amount_done = amount_done
+        log.save()
     
     # Update habit streak and last completed date
     habit.last_completed_date = today
@@ -93,7 +104,9 @@ def mark_habit_complete(habit, notes=''):
     
     # Calculate leaf dollars reward
     streak_after = habit.current_streak
-    leaf_dollars_earned = calculate_leaf_dollars_reward(streak_before, streak_after)
+    # Only award if this is a new completion (not already completed)
+    is_new_completion = created or (not created and log.status != 'completed')
+    leaf_dollars_earned = calculate_leaf_dollars_reward(streak_before, streak_after, is_completion=is_new_completion)
     
     # Award leaf dollars to user
     if leaf_dollars_earned > 0:
@@ -101,38 +114,40 @@ def mark_habit_complete(habit, notes=''):
         habit.user.save()
     
     return {
-        'completion': completion,
+        'completion': log,
         'leaf_dollars_earned': leaf_dollars_earned,
         'new_streak': streak_after
     }
 
 
-def mark_habit_incomplete(habit):
+def mark_habit_incomplete(habit, status='missed'):
     """
     Mark a habit as incomplete for today.
+    Per spec: status should be 'missed' (✗) when user doesn't complete habit.
     
     Args:
         habit: Habit instance
+        status: Status to set ('missed' by default, or 'failed', 'skipped', 'partial' for legacy)
         
     Returns:
-        HabitCompletion: The completion record
+        HabitLog: The log record
     """
     today = timezone.now().date()
     
-    completion, created = habit.completions.get_or_create(
-        date=today,
-        defaults={'completed': False}
+    log, created = habit.logs.get_or_create(
+        log_date=today,
+        defaults={'status': status}
     )
     
     if not created:
-        completion.completed = False
-        completion.save()
+        log.status = status
+        log.save()
     
-    # Update streak
+    # Update streak (streak breaks on missed day)
     update_streak(habit)
     habit.save()
     
-    return completion
+    return log
 
 
 def can_complete_habit(habit):
@@ -147,10 +162,10 @@ def can_complete_habit(habit):
         dict: {'can_complete': bool, 'reason': str}
     """
     today = timezone.now().date()
-    today_completion = get_today_completion(habit)
+    today_log = get_today_completion(habit)
     
     # Check if already completed today
-    if today_completion and today_completion.completed:
+    if today_log and today_log.status == 'completed':
         return {
             'can_complete': False,
             'reason': 'Habit already completed today'
@@ -180,31 +195,37 @@ def get_completion_stats(habit, start_date=None, end_date=None):
     Returns:
         dict: Completion statistics
     """
-    completions = habit.completions.all()
+    logs = habit.logs.all()
     
     # Filter by date range if provided
     if start_date and end_date:
-        completions = completions.filter(date__gte=start_date, date__lte=end_date)
+        logs = logs.filter(log_date__gte=start_date, log_date__lte=end_date)
     
-    total = completions.count()
-    completed = completions.filter(completed=True).count()
+    total = logs.count()
+    completed = logs.filter(status='completed').count()
+    skipped = logs.filter(status='skipped').count()
+    failed = logs.filter(status='failed').count()
+    partial = logs.filter(status='partial').count()
     incomplete = total - completed
     completion_rate = (completed / total * 100) if total > 0 else 0
     
     # Get completion by day of week
     by_day_of_week = {}
-    for completion in completions:
-        day = completion.date.weekday()  # 0 = Monday, 6 = Sunday
+    for log in logs:
+        day = log.log_date.weekday()  # 0 = Monday, 6 = Sunday
         if day not in by_day_of_week:
             by_day_of_week[day] = {'completed': 0, 'total': 0}
         by_day_of_week[day]['total'] += 1
-        if completion.completed:
+        if log.status == 'completed':
             by_day_of_week[day]['completed'] += 1
     
     return {
         'total': total,
         'completed': completed,
         'incomplete': incomplete,
+        'skipped': skipped,
+        'failed': failed,
+        'partial': partial,
         'completion_rate': round(completion_rate, 2),
         'current_streak': habit.current_streak,
         'longest_streak': habit.longest_streak,
