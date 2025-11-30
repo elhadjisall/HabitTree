@@ -64,7 +64,7 @@
   gap: var(--spacing-lg);
 }
 
-/* Forest background with sky and soil */
+/* Forest background with sky and grass field */
 .forest-background {
   position: relative;
   border-radius: var(--radius-lg);
@@ -73,6 +73,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  background: linear-gradient(to bottom, #87ceeb 0%, #b4e4f0 60%, #7cb342 60%, #5a9c2e 100%);
 }
 
 .forest-sky {
@@ -82,21 +83,52 @@
   position: relative;
 }
 
-/* Add some clouds effect */
+/* Bubbly video game clouds */
 .forest-sky::before {
   content: '';
   position: absolute;
-  top: 20%;
-  left: 10%;
-  right: 10%;
+  top: 15%;
+  left: 5%;
+  width: 120px;
   height: 60px;
-  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.4) 0%, transparent 70%);
+  background: radial-gradient(circle at 30% 50%, white 20px, transparent 20px),
+              radial-gradient(circle at 60% 40%, white 28px, transparent 28px),
+              radial-gradient(circle at 80% 55%, white 22px, transparent 22px);
+  border-radius: 50px;
+  opacity: 0.9;
   pointer-events: none;
+  animation: float1 8s ease-in-out infinite;
+}
+
+.forest-sky::after {
+  content: '';
+  position: absolute;
+  top: 25%;
+  right: 10%;
+  width: 100px;
+  height: 50px;
+  background: radial-gradient(circle at 30% 50%, white 18px, transparent 18px),
+              radial-gradient(circle at 60% 45%, white 24px, transparent 24px),
+              radial-gradient(circle at 85% 50%, white 20px, transparent 20px);
+  border-radius: 50px;
+  opacity: 0.85;
+  pointer-events: none;
+  animation: float2 10s ease-in-out infinite;
+}
+
+@keyframes float1 {
+  0%, 100% { transform: translateY(0px) translateX(0px); }
+  50% { transform: translateY(-15px) translateX(10px); }
+}
+
+@keyframes float2 {
+  0%, 100% { transform: translateY(0px) translateX(0px); }
+  50% { transform: translateY(-10px) translateX(-15px); }
 }
 
 .forest-soil {
   flex: 1;
-  background: linear-gradient(to bottom, #8b6914 0%, #a0522d 30%, #6b4423 100%);
+  background: linear-gradient(to bottom, #7cb342 0%, #5a9c2e 40%, #4a8025 100%);
   min-height: 250px;
   position: relative;
   padding: var(--spacing-xl) var(--spacing-lg);
@@ -105,15 +137,17 @@
   justify-content: center;
 }
 
-/* Add grass effect on top of soil */
+/* Grass blades effect */
 .forest-soil::before {
-  content: '';
+  content: '🌱🌿🌱🌾🌱🌿🌱🌾🌱🌿🌱🌾🌱🌿🌱🌾🌱🌿🌱🌾';
   position: absolute;
-  top: 0;
+  bottom: 0;
   left: 0;
   right: 0;
-  height: 20px;
-  background: linear-gradient(to bottom, #7cb342 0%, #689f38 100%);
+  font-size: 1.5rem;
+  text-align: center;
+  letter-spacing: 0.3rem;
+  opacity: 0.4;
   pointer-events: none;
 }
 

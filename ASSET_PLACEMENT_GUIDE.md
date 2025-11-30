@@ -15,9 +15,7 @@ public/
 │   │   ├── saku-icon.png
 │   │   └── saku-animated.riv
 │   ├── backgrounds/
-│   │   ├── mape-background.jpg
-│   │   ├── ban-background.jpg
-│   │   └── saku-background.jpg
+│   │   └── character-background.jpg
 │   └── trees/
 │       ├── tree-level-0.riv
 │       ├── tree-level-1.riv
@@ -61,19 +59,21 @@ Place your tree Rive files in: `public/assets/trees/`
   - Format: Rive animation file (.riv)
   - Animation will automatically play and loop
   - Rendered size: 180x180px
-- **Background** (for animation screen): `public/assets/backgrounds/mape-background.jpg`
-  - Format: JPG
-  - Recommended size: Match your animation screen width (around 400-600px)
 
 ### Ban
 - **Icon**: `public/assets/characters/ban-icon.png`
 - **Animated Rive**: `public/assets/characters/ban-animated.riv`
-- **Background**: `public/assets/backgrounds/ban-background.jpg`
 
 ### Saku
 - **Icon**: `public/assets/characters/saku-icon.png`
 - **Animated Rive**: `public/assets/characters/saku-animated.riv`
-- **Background**: `public/assets/backgrounds/saku-background.jpg`
+
+## 🖼️ Background Image
+
+**Shared Background** (for animation screen - all characters): `public/assets/backgrounds/character-background.jpg`
+- Format: JPG
+- Recommended size: Match your animation screen width (around 400-600px)
+- This background is used for all three characters in the animation screen
 
 ## 💬 Character Dialogues
 
@@ -128,7 +128,7 @@ To add or change dialogues, edit the `dialogues` array in each character object.
 
 4. **Animated Rive files**: Only used in the animation screen (accessed by clicking the tree icon in the main menu header). Animations will play automatically and loop continuously.
 
-5. **Backgrounds**: Each character has a unique background that displays behind them in the animation screen.
+5. **Background**: A single shared background is used for all characters in the animation screen, featuring a bubbly video game-style sky with clouds and green grass field.
 
 6. **Tree Progress**: The tree visual changes based on your quest completion percentage (0-100%), cycling through 10 different growth stages.
 

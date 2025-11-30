@@ -17,7 +17,7 @@ export const BASE_CHARACTERS: Character[] = [
     name: 'Mape',
     iconPath: '/assets/characters/mape-icon.png',
     animatedRivePath: '/assets/characters/mape-animated.riv',
-    backgroundPath: '/assets/backgrounds/mape-background.jpg',
+    backgroundPath: '/assets/backgrounds/character-background.jpg',
     unlocked: false,
     cost: 50,
     dialogues: [
@@ -36,7 +36,7 @@ export const BASE_CHARACTERS: Character[] = [
     name: 'Ban',
     iconPath: '/assets/characters/ban-icon.png',
     animatedRivePath: '/assets/characters/ban-animated.riv',
-    backgroundPath: '/assets/backgrounds/ban-background.jpg',
+    backgroundPath: '/assets/backgrounds/character-background.jpg',
     unlocked: false,
     cost: 50,
     dialogues: [
@@ -55,7 +55,7 @@ export const BASE_CHARACTERS: Character[] = [
     name: 'Saku',
     iconPath: '/assets/characters/saku-icon.png',
     animatedRivePath: '/assets/characters/saku-animated.riv',
-    backgroundPath: '/assets/backgrounds/saku-background.jpg',
+    backgroundPath: '/assets/backgrounds/character-background.jpg',
     unlocked: false,
     cost: 50,
     dialogues: [
