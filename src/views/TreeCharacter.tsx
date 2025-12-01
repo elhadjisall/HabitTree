@@ -81,7 +81,6 @@ const TreeCharacter: React.FC = () => {
   });
   const [showShop, setShowShop] = useState<boolean>(false);
   const [leafDollarsState, setLeafDollarsState] = useState<number>(getLeafDollars());
-  const [characters, setCharacters] = useState<Character[]>(loadUnlockedCharacters());
   const [isNightTime, setIsNightTime] = useState<boolean>(() => {
     const hour = new Date().getHours();
     return hour >= 18 || hour < 6; // 6 PM to 6 AM
@@ -124,8 +123,20 @@ const TreeCharacter: React.FC = () => {
 
   const currentHabit = habits.find(h => h.id === selectedHabit);
   const currentProgress = selectedHabit ? calculateProgress(selectedHabit) : 0;
-  const currentCharacter = characters.find(c => c.id === selectedCharacter);
-  const unlockedCharacters = characters.filter(c => c.unlocked);
+
+  // Get all characters with unlocked status
+  const unlockedIds = (() => {
+    const stored = localStorage.getItem(UNLOCKED_CHARACTERS_KEY);
+    return stored ? JSON.parse(stored) as number[] : [];
+  })();
+
+  const allCharacters = BASE_CHARACTERS.map(char => ({
+    ...char,
+    unlocked: unlockedIds.includes(char.id)
+  }));
+
+  const currentCharacter = allCharacters.find(c => c.id === selectedCharacter);
+  const unlockedCharacters = allCharacters.filter(c => c.unlocked);
 
   const handlePurchaseCharacter = (characterId: number, cost: number): void => {
     if (leafDollarsState >= cost) {
@@ -133,10 +144,9 @@ const TreeCharacter: React.FC = () => {
       setLeafDollars(newBalance);
       setLeafDollarsState(newBalance);
       saveUnlockedCharacters(characterId); // Persist to localStorage
-      // Reload characters to reflect the update
-      setCharacters(loadUnlockedCharacters());
       alert('Character unlocked! 🎉');
-      setShowShop(false);
+      // Force re-render by changing state
+      window.location.reload();
     } else {
       alert('Not enough Leaf Dollars! Keep completing your quests! 🍃');
     }
@@ -205,12 +215,7 @@ const TreeCharacter: React.FC = () => {
               </div>
 
               {/* Character on the right */}
-              <div className="character-container" style={{
-                backgroundImage: currentCharacter ? `url(${currentCharacter.backgroundPath})` : 'none',
-                backgroundSize: 'contain',
-                backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat'
-              }}>
+              <div className="character-container">
                 <div className="character-placeholder">
                   {currentCharacter && (
                     <RiveCharacter
@@ -268,7 +273,7 @@ const TreeCharacter: React.FC = () => {
             </div>
 
             <div className="shop-items">
-              {characters.map(character => (
+              {allCharacters.map(character => (
                 <div
                   key={character.id}
                   className={`shop-item ${character.unlocked ? 'unlocked' : ''}`}
