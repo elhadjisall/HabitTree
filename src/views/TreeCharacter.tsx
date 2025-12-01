@@ -82,11 +82,26 @@ const TreeCharacter: React.FC = () => {
   const [showShop, setShowShop] = useState<boolean>(false);
   const [leafDollarsState, setLeafDollarsState] = useState<number>(getLeafDollars());
   const [characters, setCharacters] = useState<Character[]>(loadUnlockedCharacters());
+  const [isNightTime, setIsNightTime] = useState<boolean>(() => {
+    const hour = new Date().getHours();
+    return hour >= 18 || hour < 6; // 6 PM to 6 AM
+  });
 
   // Sync leaf dollars with global storage
   useEffect(() => {
     const storedLeafDollars = getLeafDollars();
     setLeafDollarsState(storedLeafDollars);
+  }, []);
+
+  // Check day/night every minute
+  useEffect(() => {
+    const checkDayNight = () => {
+      const hour = new Date().getHours();
+      setIsNightTime(hour >= 18 || hour < 6);
+    };
+
+    const interval = setInterval(checkDayNight, 60000); // Check every minute
+    return () => clearInterval(interval);
   }, []);
 
   // Persist selected character to localStorage
@@ -166,9 +181,12 @@ const TreeCharacter: React.FC = () => {
 
       {/* Main visualization area */}
       <div className="visualization-area">
-        <div className="forest-background">
+        <div className={`forest-background ${isNightTime ? 'night-mode' : ''}`}>
           {/* Sky/trees at top, soil at bottom */}
-          <div className="forest-sky"></div>
+          <div className="forest-sky">
+            <div className="sun"></div>
+            <div className="moon"></div>
+          </div>
           <div className="forest-soil">
             {/* Horizontal layout: Tree and Character side by side */}
             <div className="horizontal-scene">

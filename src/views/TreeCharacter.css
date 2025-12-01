@@ -40,20 +40,26 @@
 }
 
 /* Dark Mode - Improve Quest/Companion label contrast */
+.dark-mode .tree-character {
+  background: linear-gradient(to bottom, #1a1a1a, #2d2d2d);
+}
+
 .dark-mode .dropdown-group label {
-  color: #e8e8e8;
+  color: #ffffff;
   font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .dark-mode .control-dropdown {
-  background: #3a3a3a;
+  background: #2d2d2d;
   border-color: #505050;
-  color: #e8e8e8;
+  color: #ffffff;
+  font-weight: 600;
 }
 
 .dark-mode .control-dropdown option {
-  background: #3a3a3a;
-  color: #e8e8e8;
+  background: #2d2d2d;
+  color: #ffffff;
 }
 
 /* Visualization area */
@@ -64,7 +70,7 @@
   gap: var(--spacing-lg);
 }
 
-/* Forest background with sky and grass field */
+/* Forest background with sky and grass field - Day theme */
 .forest-background {
   position: relative;
   border-radius: var(--radius-lg);
@@ -73,14 +79,64 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(to bottom, #87ceeb 0%, #b4e4f0 60%, #7cb342 60%, #5a9c2e 100%);
+  background: linear-gradient(to bottom, #87ceeb 0%, #b4e4f0 80%, #7cb342 80%, #5a9c2e 100%);
+}
+
+/* Night theme - applies between 6 PM and 6 AM */
+.forest-background.night-mode {
+  background: linear-gradient(to bottom, #0a1931 0%, #1e3a5f 80%, #2d4a3e 80%, #1f3a2c 100%);
 }
 
 .forest-sky {
   flex: 1;
   background: linear-gradient(to bottom, #87ceeb 0%, #98d8e8 50%, #b4e4f0 100%);
-  min-height: 200px;
+  min-height: 320px;
   position: relative;
+}
+
+/* Night sky */
+.forest-background.night-mode .forest-sky {
+  background: linear-gradient(to bottom, #0a1931 0%, #1a2f4a 50%, #1e3a5f 100%);
+}
+
+/* Sun */
+.forest-sky .sun {
+  position: absolute;
+  top: 20%;
+  right: 15%;
+  width: 80px;
+  height: 80px;
+  background: radial-gradient(circle, #ffd700 0%, #ffed4e 50%, rgba(255, 237, 78, 0) 70%);
+  border-radius: 50%;
+  animation: float-sun 12s ease-in-out infinite;
+  opacity: 0.95;
+}
+
+/* Moon - only visible in night mode */
+.forest-sky .moon {
+  position: absolute;
+  top: 20%;
+  right: 15%;
+  width: 70px;
+  height: 70px;
+  background: radial-gradient(circle at 35% 35%, #f0f0f0 0%, #d4d4d4 50%, rgba(212, 212, 212, 0) 70%);
+  border-radius: 50%;
+  animation: float-sun 12s ease-in-out infinite;
+  opacity: 0;
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+}
+
+.forest-background.night-mode .sun {
+  opacity: 0;
+}
+
+.forest-background.night-mode .moon {
+  opacity: 0.9;
+}
+
+@keyframes float-sun {
+  0%, 100% { transform: translateY(0px) translateX(0px); }
+  50% { transform: translateY(-20px) translateX(-10px); }
 }
 
 /* Bubbly video game clouds */
@@ -103,7 +159,7 @@
 .forest-sky::after {
   content: '';
   position: absolute;
-  top: 25%;
+  top: 35%;
   right: 10%;
   width: 100px;
   height: 50px;
@@ -114,6 +170,15 @@
   opacity: 0.85;
   pointer-events: none;
   animation: float2 10s ease-in-out infinite;
+}
+
+/* Night clouds - darker */
+.forest-background.night-mode .forest-sky::before,
+.forest-background.night-mode .forest-sky::after {
+  background: radial-gradient(circle at 30% 50%, rgba(100, 120, 150, 0.5) 20px, transparent 20px),
+              radial-gradient(circle at 60% 40%, rgba(100, 120, 150, 0.6) 28px, transparent 28px),
+              radial-gradient(circle at 80% 55%, rgba(100, 120, 150, 0.5) 22px, transparent 22px);
+  opacity: 0.6;
 }
 
 @keyframes float1 {
@@ -129,12 +194,17 @@
 .forest-soil {
   flex: 1;
   background: linear-gradient(to bottom, #7cb342 0%, #5a9c2e 40%, #4a8025 100%);
-  min-height: 250px;
+  min-height: 130px;
   position: relative;
   padding: var(--spacing-xl) var(--spacing-lg);
   display: flex;
   align-items: flex-end;
   justify-content: center;
+}
+
+/* Night grass */
+.forest-background.night-mode .forest-soil {
+  background: linear-gradient(to bottom, #2d4a3e 0%, #254033 40%, #1f3a2c 100%);
 }
 
 /* Grass blades effect */
