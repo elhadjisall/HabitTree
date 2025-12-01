@@ -8,7 +8,7 @@ class User(AbstractUser):
     """Custom User model extending Django's AbstractUser"""
     email = models.EmailField(unique=True)
     display_name = models.CharField(max_length=100, blank=True, null=True)
-    avatar_url = models.URLField(max_length=500, blank=True, null=True)
+    avatar_url = models.CharField(max_length=500, blank=True, null=True)  # Changed from URLField to CharField to accept relative paths
     leaf_dollars = models.IntegerField(default=0)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
