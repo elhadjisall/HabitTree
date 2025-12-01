@@ -4,6 +4,7 @@ import { getDarkMode, setDarkMode } from '../utils/darkModeStorage';
 import { getUserProfile, updateUsername, updateAvatar, getUnlockedCharacters, getCharacterById, type Character } from '../utils/charactersStorage';
 import { getCompanionSlots, setCompanionSlots, getMaxCompanionSlots } from '../utils/companionSlotsStorage';
 import { useHabits } from '../hooks/useHabits';
+import { getCurrentUser, updateUserProfile, logout } from '../services/auth';
 import QuestCompletionPopup from '../components/QuestCompletionPopup';
 import QuestHistory from './QuestHistory';
 
@@ -35,6 +36,40 @@ const Settings: React.FC = () => {
     email: 'user@example.com',
     profilePicture: userProfile.avatar,
   });
+  const [loading, setLoading] = useState<boolean>(true);
+
+  // Fetch user data from backend on mount
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const user = await getCurrentUser();
+        if (user) {
+          // Convert full URL to relative path if needed for display
+          let avatarPath = user.avatar_url || userProfile.avatar;
+          if (avatarPath && avatarPath.startsWith('http')) {
+            // Extract relative path from full URL
+            try {
+              const url = new URL(avatarPath);
+              avatarPath = url.pathname;
+            } catch {
+              // If URL parsing fails, use as is
+            }
+          }
+          
+          setProfile({
+            username: user.display_name || user.username,
+            email: user.email,
+            profilePicture: avatarPath,
+          });
+        }
+      } catch (error) {
+        console.error('Failed to fetch user data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUserData();
+  }, []);
 
   const [editMode, setEditMode] = useState<EditModeState>({
     username: false,
@@ -89,7 +124,7 @@ const Settings: React.FC = () => {
     });
   };
 
-  const handleSave = (field: string): void => {
+  const handleSave = async (field: string): Promise<void> => {
     if (field === 'password') {
       if (formData.newPassword !== formData.confirmPassword) {
         alert('Passwords do not match!');
@@ -99,6 +134,7 @@ const Settings: React.FC = () => {
         alert('Password must be at least 8 characters!');
         return;
       }
+      // TODO: Implement password change API endpoint
       alert('Password updated successfully!');
       setFormData({
         ...formData,
@@ -107,10 +143,17 @@ const Settings: React.FC = () => {
         confirmPassword: '',
       });
     } else if (field === 'username') {
-      const newUsername = formData.username;
-      setProfile({ ...profile, username: newUsername });
-      updateUsername(newUsername);
-      alert('Username updated!');
+      try {
+        const newUsername = formData.username;
+        await updateUserProfile({ display_name: newUsername });
+        setProfile({ ...profile, username: newUsername });
+        updateUsername(newUsername); // Also update local storage
+        alert('Username updated!');
+      } catch (error) {
+        console.error('Failed to update username:', error);
+        alert('Failed to update username. Please try again.');
+        return;
+      }
     } else {
       setProfile({ ...profile, [field]: formData[field as keyof FormDataState] });
       alert(`${field.charAt(0).toUpperCase() + field.slice(1)} updated!`);
@@ -118,12 +161,38 @@ const Settings: React.FC = () => {
     setEditMode({ ...editMode, [field]: false });
   };
 
-  const handleProfilePictureChange = (characterId: number): void => {
+  const handleProfilePictureChange = async (characterId: number): Promise<void> => {
     const character = getCharacterById(characterId);
     if (character) {
-      setProfile({ ...profile, profilePicture: character.iconPath });
-      updateAvatar(characterId);
-      setShowProfilePicturePicker(false);
+      try {
+        // Send the relative path directly (backend now accepts CharField)
+        // The iconPath is like '/assets/characters/mape-icon.png'
+        await updateUserProfile({ avatar_url: character.iconPath });
+        
+        // Update local state immediately
+        setProfile({ ...profile, profilePicture: character.iconPath });
+        updateAvatar(characterId); // Also update local storage
+        setShowProfilePicturePicker(false);
+        
+        // Refresh user data to confirm update
+        try {
+          const updatedUser = await getCurrentUser();
+          if (updatedUser && updatedUser.avatar_url) {
+            // Use the path from backend
+            setProfile(prev => ({
+              ...prev,
+              profilePicture: updatedUser.avatar_url || character.iconPath
+            }));
+          }
+        } catch (refreshError) {
+          console.error('Failed to refresh user data:', refreshError);
+          // Continue anyway, local state is already updated
+        }
+      } catch (error: any) {
+        console.error('Failed to update avatar:', error);
+        const errorMessage = error?.message || 'Failed to update profile picture. Please try again.';
+        alert(errorMessage);
+      }
     }
   };
 
@@ -145,8 +214,7 @@ const Settings: React.FC = () => {
 
   const handleLogout = (): void => {
     if (window.confirm('Are you sure you want to log out?')) {
-      alert('Logged out successfully!');
-      // In a real app, this would clear auth tokens and redirect to login
+      logout();
     }
   };
 
@@ -174,8 +242,27 @@ const Settings: React.FC = () => {
           <div
             className="profile-picture-small"
             onClick={() => setShowProfilePicturePicker(true)}
+            style={{ cursor: 'pointer' }}
           >
-            <img src={profile.profilePicture} alt="Profile" style={{width: '100%', height: '100%', objectFit: 'cover'}} />
+            {profile.profilePicture && (profile.profilePicture.startsWith('/') || profile.profilePicture.startsWith('http')) ? (
+              <img 
+                src={profile.profilePicture} 
+                alt="Profile" 
+                style={{width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%'}}
+                onError={(e) => {
+                  // Fallback to emoji if image fails to load
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  if (target.parentElement) {
+                    target.parentElement.textContent = '👤';
+                  }
+                }}
+              />
+            ) : (
+              <div style={{ fontSize: '3rem', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
+                {profile.profilePicture || '👤'}
+              </div>
+            )}
           </div>
           <h2 className="profile-username">{profile.username}</h2>
         </div>
@@ -373,7 +460,22 @@ const Settings: React.FC = () => {
                   className={`emoji-option ${profile.profilePicture === character.iconPath ? 'active' : ''}`}
                   onClick={() => handleProfilePictureChange(character.id)}
                 >
-                  <img src={character.iconPath} alt={character.name} style={{width: '100%', height: '100%', objectFit: 'cover'}} />
+                  {character.iconPath && (character.iconPath.startsWith('/') || character.iconPath.startsWith('http')) ? (
+                    <img 
+                      src={character.iconPath} 
+                      alt={character.name} 
+                      style={{width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px'}}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        if (target.parentElement) {
+                          target.parentElement.textContent = character.name.charAt(0).toUpperCase();
+                        }
+                      }}
+                    />
+                  ) : (
+                    <span style={{ fontSize: '2rem' }}>{character.name.charAt(0)}</span>
+                  )}
                 </button>
               ))}
             </div>

@@ -1,28 +1,76 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './LandingPage.css';
+import { login, register, type LoginCredentials, type RegisterData } from '../services/auth';
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [password2, setPassword2] = useState('');
+  const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
 
   const handleGetStarted = () => {
     setShowAuthModal(true);
+    setError('');
   };
 
-  const handleAuth = (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    // NO backend logic - just navigate to app
-    navigate('/app');
+    setError('');
+    setLoading(true);
+
+    try {
+      if (isLogin) {
+        // Login
+        const credentials: LoginCredentials = {
+          email: email.trim(),
+          password: password
+        };
+        await login(credentials);
+        // Navigate to app on success
+        navigate('/app');
+      } else {
+        // Register
+        if (password !== password2) {
+          setError('Passwords do not match');
+          setLoading(false);
+          return;
+        }
+        if (password.length < 8) {
+          setError('Password must be at least 8 characters');
+          setLoading(false);
+          return;
+        }
+        const registerData: RegisterData = {
+          email: email.trim(),
+          username: username.trim(),
+          password: password,
+          password2: password2
+        };
+        await register(registerData);
+        // Navigate to app on success (register also logs in)
+        navigate('/app');
+      }
+    } catch (error: any) {
+      console.error('Auth error:', error);
+      setError(error?.message || (isLogin ? 'Login failed. Please check your credentials.' : 'Registration failed. Please try again.'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleAuthMode = () => {
     setIsLogin(!isLogin);
     setEmail('');
+    setUsername('');
     setPassword('');
+    setPassword2('');
+    setError('');
   };
 
   const features = [
@@ -105,7 +153,33 @@ const LandingPage: React.FC = () => {
               ✕
             </button>
             <h2 className="auth-modal-title">Welcome to Habitree 🌲</h2>
+            {error && (
+              <div className="auth-error" style={{ 
+                color: '#ff6b6b', 
+                padding: '10px', 
+                marginBottom: '15px', 
+                background: 'rgba(255, 107, 107, 0.1)', 
+                borderRadius: '8px',
+                fontSize: '14px'
+              }}>
+                {error}
+              </div>
+            )}
             <form className="auth-form" onSubmit={handleAuth}>
+              {!isLogin && (
+                <div className="auth-input-group">
+                  <label htmlFor="username">Username</label>
+                  <input
+                    type="text"
+                    id="username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="Enter your username"
+                    required
+                    disabled={loading}
+                  />
+                </div>
+              )}
               <div className="auth-input-group">
                 <label htmlFor="email">Email</label>
                 <input
@@ -115,6 +189,7 @@ const LandingPage: React.FC = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
                   required
+                  disabled={loading}
                 />
               </div>
               <div className="auth-input-group">
@@ -126,15 +201,32 @@ const LandingPage: React.FC = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
                   required
+                  disabled={loading}
+                  minLength={isLogin ? undefined : 8}
                 />
               </div>
-              <button type="submit" className="auth-submit-btn">
-                {isLogin ? 'Log In' : 'Create Account'}
+              {!isLogin && (
+                <div className="auth-input-group">
+                  <label htmlFor="password2">Confirm Password</label>
+                  <input
+                    type="password"
+                    id="password2"
+                    value={password2}
+                    onChange={(e) => setPassword2(e.target.value)}
+                    placeholder="Confirm your password"
+                    required
+                    disabled={loading}
+                    minLength={8}
+                  />
+                </div>
+              )}
+              <button type="submit" className="auth-submit-btn" disabled={loading}>
+                {loading ? 'Please wait...' : (isLogin ? 'Log In' : 'Create Account')}
               </button>
             </form>
             <p className="auth-toggle">
               {isLogin ? "Don't have an account? " : "Already have an account? "}
-              <button type="button" className="auth-toggle-btn" onClick={toggleAuthMode}>
+              <button type="button" className="auth-toggle-btn" onClick={toggleAuthMode} disabled={loading}>
                 {isLogin ? 'Create Account' : 'Log In'}
               </button>
             </p>

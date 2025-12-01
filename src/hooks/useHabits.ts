@@ -1,13 +1,19 @@
 import { useState, useEffect } from 'react';
-import { getHabits, type Habit } from '../utils/habitsStore';
+import { getHabits, getHabitsSync, type Habit } from '../utils/habitsStore';
+import { isAuthenticated } from '../services/auth';
 
 // Custom hook for reactive habits
 export const useHabits = (): Habit[] => {
-  const [habits, setHabits] = useState<Habit[]>(getHabits());
+  const [habits, setHabits] = useState<Habit[]>(getHabitsSync());
 
   useEffect(() => {
+    // Fetch habits from backend if authenticated
+    if (isAuthenticated()) {
+      getHabits().then(setHabits).catch(console.error);
+    }
+
     const handleChange = () => {
-      setHabits(getHabits());
+      setHabits(getHabitsSync());
     };
 
     // Listen for habit changes

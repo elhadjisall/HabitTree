@@ -5,9 +5,11 @@ import { getLeafDollars, addLeafDollars, subtractLeafDollars } from '../utils/le
 import { updateHabitLog, getTodayDateString, formatDate, getHabitLog, getHabitLogs, setHabitLogs } from '../utils/habitLogsStore';
 import { useHabits } from '../hooks/useHabits';
 import { calculateStreak } from '../utils/streakCalculation';
-import { deleteHabit, updateHabit, completeHabit, type Habit } from '../utils/habitsStore';
+import { deleteHabit, updateHabit, completeHabit, getHabits, type Habit } from '../utils/habitsStore';
 import { hasShownCompletionPopup, markQuestCompletionShown } from '../utils/completedQuestsStorage';
 import { getSelectedCharacter, getRandomDialogue, initializeFirstCharacter } from '../utils/charactersStorage';
+import { api } from '../services/api';
+import { getCurrentUser } from '../services/auth';
 import ConfirmModal from '../components/ConfirmModal';
 import QuestCompletionCongrats from '../components/QuestCompletionCongrats';
 
@@ -137,24 +139,28 @@ const MainMenu: React.FC = () => {
   useEffect(() => {
     if (completionQueue.length > 0 && !showCompletionPopup) {
       const nextQuestId = completionQueue[0];
-      const result = completeHabit(nextQuestId);
+      completeHabit(nextQuestId).then(result => {
+        if (result) {
+          setCurrentCompletion({
+            questName: result.habit.label,
+            questEmoji: result.habit.emoji,
+            questColor: result.habit.color,
+            daysCompleted: result.stats.daysCompleted,
+            daysMissed: result.stats.daysMissed,
+            highestStreak: result.stats.highestStreak
+          });
+          setShowCompletionPopup(true);
+          setQuestToRemove(nextQuestId);
+          markQuestCompletionShown(nextQuestId);
+        }
 
-      if (result) {
-        setCurrentCompletion({
-          questName: result.habit.label,
-          questEmoji: result.habit.emoji,
-          questColor: result.habit.color,
-          daysCompleted: result.stats.daysCompleted,
-          daysMissed: result.stats.daysMissed,
-          highestStreak: result.stats.highestStreak
-        });
-        setShowCompletionPopup(true);
-        setQuestToRemove(nextQuestId);
-        markQuestCompletionShown(nextQuestId);
-      }
-
-      // Remove from queue
-      setCompletionQueue(prev => prev.slice(1));
+        // Remove from queue
+        setCompletionQueue(prev => prev.slice(1));
+      }).catch(error => {
+        console.error('Failed to complete habit:', error);
+        // Remove from queue even on error
+        setCompletionQueue(prev => prev.slice(1));
+      });
     }
   }, [completionQueue, showCompletionPopup]);
 
@@ -170,7 +176,7 @@ const MainMenu: React.FC = () => {
     return Math.max(0, habit.duration_days - daysPassed);
   };
 
-  const handleCheckboxToggle = (habit: Habit): void => {
+  const handleCheckboxToggle = async (habit: Habit): Promise<void> => {
     if (!isToday(selectedDay) || (habit.trackingType !== 'tick_cross' && habit.trackingType !== 'quit')) return;
 
     const currentState = habitStates[habit.id];
@@ -180,26 +186,60 @@ const MainMenu: React.FC = () => {
 
     const newCompleted = !currentState.completed;
 
-    // Save to shared habit logs store
-    const dateString = getTodayDateString();
-    updateHabitLog(habit.id, dateString, newCompleted);
+    try {
+      if (newCompleted) {
+        // Mark as complete via backend API
+        const response = await api.post(`/habits/${habit.id}/complete/`, {});
+        
+        // Update leaf dollars from backend response
+        if (response.total_leaf_dollars !== undefined) {
+          setLeafDollarsState(response.total_leaf_dollars);
+          // Also update localStorage for consistency
+          localStorage.setItem('leafDollars', String(response.total_leaf_dollars));
+        } else if (response.leaf_dollars_earned) {
+          const newBalance = addLeafDollars(response.leaf_dollars_earned);
+          setLeafDollarsState(newBalance);
+        }
 
-    // Update local UI state
-    setHabitStates(prev => ({
-      ...prev,
-      [habit.id]: { ...prev[habit.id], completed: newCompleted }
-    }));
+        // Update local cache
+        const dateString = getTodayDateString();
+        updateHabitLog(habit.id, dateString, true);
+        
+        // Refresh habits to get updated streak
+        const updatedHabits = await getHabits();
+        window.dispatchEvent(new Event('habitsChanged'));
+      } else {
+        // Mark as incomplete via backend API
+        await api.post(`/habits/${habit.id}/incomplete/`, {});
+        
+        // Update local cache
+        const dateString = getTodayDateString();
+        updateHabitLog(habit.id, dateString, false);
+      }
 
-    if (newCompleted) {
-      setCompletedHabitId(habit.id);
-      setTimeout(() => setCompletedHabitId(null), 600);
-      // Award +1 leaf dollar
-      const newBalance = addLeafDollars(1);
-      setLeafDollarsState(newBalance);
+      // Update local UI state
+      setHabitStates(prev => ({
+        ...prev,
+        [habit.id]: { ...prev[habit.id], completed: newCompleted }
+      }));
+
+      if (newCompleted) {
+        setCompletedHabitId(habit.id);
+        setTimeout(() => setCompletedHabitId(null), 600);
+      }
+    } catch (error) {
+      console.error('Failed to update habit completion:', error);
+      // Fallback to local update on error
+      const dateString = getTodayDateString();
+      updateHabitLog(habit.id, dateString, newCompleted);
+      setHabitStates(prev => ({
+        ...prev,
+        [habit.id]: { ...prev[habit.id], completed: newCompleted }
+      }));
     }
   };
 
-  const handleNumericChange = (habit: Habit, value: string): void => {
+  const handleNumericChange = async (habit: Habit, value: string): Promise<void> => {
     if (!isToday(selectedDay) || habit.trackingType !== 'variable_amount') return;
 
     const previousValue = habitStates[habit.id]?.currentValue || 0;
@@ -211,59 +251,108 @@ const MainMenu: React.FC = () => {
     const newValue = Math.max(0, Number(value) || 0);
     const isNowCompleted = habit.target_amount !== undefined && newValue >= habit.target_amount;
 
-    // Save to shared habit logs store
-    const dateString = getTodayDateString();
-    updateHabitLog(habit.id, dateString, isNowCompleted, newValue);
+    try {
+      if (isNowCompleted && !wasCompleted) {
+        // Mark as complete via backend API when target is reached
+        const response = await api.post(`/habits/${habit.id}/complete/`, {
+          amount_done: newValue
+        });
+        
+        // Update leaf dollars from backend response
+        if (response.total_leaf_dollars !== undefined) {
+          setLeafDollarsState(response.total_leaf_dollars);
+          localStorage.setItem('leafDollars', String(response.total_leaf_dollars));
+        } else if (response.leaf_dollars_earned) {
+          const newBalance = addLeafDollars(response.leaf_dollars_earned);
+          setLeafDollarsState(newBalance);
+        }
 
-    // Update local UI state
-    setHabitStates(prev => ({
-      ...prev,
-      [habit.id]: { ...prev[habit.id], currentValue: newValue }
-    }));
+        // Refresh habits to get updated streak
+        await getHabits();
+        window.dispatchEvent(new Event('habitsChanged'));
+      }
 
-    if (!wasCompleted && isNowCompleted) {
-      setCompletedHabitId(habit.id);
-      setTimeout(() => setCompletedHabitId(null), 600);
-      // Award +1 leaf dollar
-      const newBalance = addLeafDollars(1);
-      setLeafDollarsState(newBalance);
+      // Save to shared habit logs store
+      const dateString = getTodayDateString();
+      updateHabitLog(habit.id, dateString, isNowCompleted, newValue);
+
+      // Update local UI state
+      setHabitStates(prev => ({
+        ...prev,
+        [habit.id]: { ...prev[habit.id], currentValue: newValue }
+      }));
+
+      if (!wasCompleted && isNowCompleted) {
+        setCompletedHabitId(habit.id);
+        setTimeout(() => setCompletedHabitId(null), 600);
+      }
+    } catch (error) {
+      console.error('Failed to update habit value:', error);
+      // Fallback to local update on error
+      const dateString = getTodayDateString();
+      updateHabitLog(habit.id, dateString, isNowCompleted, newValue);
+      setHabitStates(prev => ({
+        ...prev,
+        [habit.id]: { ...prev[habit.id], currentValue: newValue }
+      }));
     }
   };
 
-  const handleReviveStreak = (habit: Habit): void => {
+  const handleReviveStreak = async (habit: Habit): Promise<void> => {
     if (leafDollars < 10) {
       alert('Not enough Leaf Dollars! You need 10 🍃 to revive a streak.');
       return;
     }
 
     if (window.confirm('Revive this missed day for 10 Leaf Dollars? 🍃')) {
-      const newBalance = subtractLeafDollars(10);
-      setLeafDollarsState(newBalance);
+      try {
+        // Calculate the date for the selected past day
+        const today = new Date();
+        const dayOffset = selectedDay - getTodayIndex();
+        const targetDate = new Date(today);
+        targetDate.setDate(today.getDate() + dayOffset);
+        const dateString = formatDate(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
 
-      // Calculate the date for the selected past day
-      const today = new Date();
-      const dayOffset = selectedDay - getTodayIndex();
-      const targetDate = new Date(today);
-      targetDate.setDate(today.getDate() + dayOffset);
-      const dateString = formatDate(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
+        // Revive via backend API
+        const response = await api.post(`/habits/${habit.id}/revive/`, {
+          date: dateString
+        });
 
-      // Save completion to logs with wasRevived flag
-      if (habit.trackingType === 'variable_amount' && habit.target_amount) {
-        updateHabitLog(habit.id, dateString, true, habit.target_amount, true);
-        setHabitStates(prev => ({
-          ...prev,
-          [habit.id]: { ...prev[habit.id], currentValue: habit.target_amount!, completed: true }
-        }));
-      } else {
-        updateHabitLog(habit.id, dateString, true, undefined, true);
-        setHabitStates(prev => ({
-          ...prev,
-          [habit.id]: { ...prev[habit.id], completed: true }
-        }));
+        // Update leaf dollars from backend response
+        if (response.remaining_leaf_dollars !== undefined) {
+          setLeafDollarsState(response.remaining_leaf_dollars);
+          localStorage.setItem('leafDollars', String(response.remaining_leaf_dollars));
+        } else {
+          const newBalance = subtractLeafDollars(10);
+          setLeafDollarsState(newBalance);
+        }
+
+        // Refresh habits to get updated streak
+        await getHabits();
+        window.dispatchEvent(new Event('habitsChanged'));
+
+        // Save completion to logs with wasRevived flag
+        if (habit.trackingType === 'variable_amount' && habit.target_amount) {
+          updateHabitLog(habit.id, dateString, true, habit.target_amount, true);
+          setHabitStates(prev => ({
+            ...prev,
+            [habit.id]: { ...prev[habit.id], currentValue: habit.target_amount!, completed: true }
+          }));
+        } else {
+          updateHabitLog(habit.id, dateString, true, undefined, true);
+          setHabitStates(prev => ({
+            ...prev,
+            [habit.id]: { ...prev[habit.id], completed: true }
+          }));
+        }
+
+        setCompletedHabitId(habit.id);
+        setTimeout(() => setCompletedHabitId(null), 600);
+      } catch (error: any) {
+        console.error('Failed to revive habit:', error);
+        const errorMessage = error?.message || 'Failed to revive habit. Please try again.';
+        alert(errorMessage);
       }
-
-      setCompletedHabitId(habit.id);
-      setTimeout(() => setCompletedHabitId(null), 600);
     }
   };
 
@@ -286,19 +375,24 @@ const MainMenu: React.FC = () => {
     setDeleteConfirmModal({ isOpen: true, habitId });
   };
 
-  const confirmDeleteHabit = (): void => {
+  const confirmDeleteHabit = async (): Promise<void> => {
     if (deleteConfirmModal.habitId) {
-      // Delete habit from store
-      deleteHabit(deleteConfirmModal.habitId);
+      try {
+        // Delete habit from backend
+        await deleteHabit(deleteConfirmModal.habitId);
 
-      // Delete all logs for this habit
-      const allLogs = getHabitLogs();
-      const filteredLogs = allLogs.filter(log => String(log.habitId) !== String(deleteConfirmModal.habitId));
-      setHabitLogs(filteredLogs);
+        // Delete all logs for this habit
+        const allLogs = getHabitLogs();
+        const filteredLogs = allLogs.filter(log => String(log.habitId) !== String(deleteConfirmModal.habitId));
+        setHabitLogs(filteredLogs);
 
-      setShowHabitDetails(false);
-      setSelectedHabitForDetails(null);
-      setDeleteConfirmModal({ isOpen: false, habitId: null });
+        setShowHabitDetails(false);
+        setSelectedHabitForDetails(null);
+        setDeleteConfirmModal({ isOpen: false, habitId: null });
+      } catch (error) {
+        console.error('Failed to delete habit:', error);
+        alert('Failed to delete habit. Please try again.');
+      }
     }
   };
 

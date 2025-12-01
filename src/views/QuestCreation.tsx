@@ -99,7 +99,7 @@ const QuestCreation: React.FC = () => {
     setShowForm(true);
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
 
     if (!quest.label.trim()) {
@@ -112,22 +112,27 @@ const QuestCreation: React.FC = () => {
       return;
     }
 
-    // Create the habit
-    const newHabit = addHabit({
-      label: quest.label,
-      emoji: quest.emoji,
-      color: quest.color,
-      duration_days: quest.duration,
-      trackingType: quest.trackingType,
-      target_amount: quest.trackingType === 'variable_amount' ? quest.targetAmount : undefined,
-      unit: quest.trackingType === 'variable_amount' ? quest.unit : undefined,
-      isPrivate: quest.isPrivate,
-    });
+    try {
+      // Create the habit via backend API
+      const newHabit = await addHabit({
+        label: quest.label,
+        emoji: quest.emoji,
+        color: quest.color,
+        duration_days: quest.duration,
+        trackingType: quest.trackingType,
+        target_amount: quest.trackingType === 'variable_amount' ? quest.targetAmount : undefined,
+        unit: quest.trackingType === 'variable_amount' ? quest.unit : undefined,
+        isPrivate: quest.isPrivate,
+      });
 
-    // Show confirmation modal
-    setCreatedQuest({ emoji: newHabit.emoji, label: newHabit.label });
-    setShowConfirmation(true);
-    setShowForm(false);
+      // Show confirmation modal
+      setCreatedQuest({ emoji: newHabit.emoji, label: newHabit.label });
+      setShowConfirmation(true);
+      setShowForm(false);
+    } catch (error) {
+      console.error('Failed to create habit:', error);
+      alert('Failed to create quest. Please try again.');
+    }
   };
 
   const handleBackToList = (): void => {

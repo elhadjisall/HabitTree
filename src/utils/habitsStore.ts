@@ -1,5 +1,7 @@
 // Habits Store - Single source of truth for all habit data
+// Integrated with backend API
 
+import { api } from '../services/api';
 import { getHabitLogs, formatDate } from './habitLogsStore';
 import { addQuestToHistory, type QuestHistoryEntry } from './questHistoryStorage';
 
@@ -19,48 +21,181 @@ export interface Habit {
   isPrivate?: boolean; // Public by default (false), true for private habits
 }
 
+// Backend Habit format
+interface BackendHabit {
+  id: number;
+  name: string;
+  description?: string;
+  emoji?: string;
+  color?: string;
+  icon?: string;
+  habit_type?: string;
+  tracking_mode: string;
+  target_amount?: number;
+  unit?: string;
+  frequency?: string;
+  duration_days?: number;
+  is_public: boolean;
+  is_active: boolean;
+  current_streak: number;
+  longest_streak: number;
+  last_completed_date?: string;
+  created_at: string;
+  updated_at?: string;
+  completion_percentage?: number;
+}
+
+// Map backend habit to frontend format
+const mapBackendToFrontend = (backendHabit: BackendHabit): Habit => {
+  // Map tracking_mode to TrackingType
+  let trackingType: TrackingType = 'tick_cross';
+  if (backendHabit.tracking_mode === 'amount' || backendHabit.tracking_mode === 'variable_amount') {
+    trackingType = 'variable_amount';
+  } else if (backendHabit.tracking_mode === 'quit') {
+    trackingType = 'quit';
+  }
+
+  return {
+    id: String(backendHabit.id),
+    label: backendHabit.name,
+    emoji: backendHabit.emoji || '🌱',
+    color: backendHabit.color || '#6ab04c',
+    duration_days: backendHabit.duration_days || 30,
+    trackingType,
+    target_amount: backendHabit.target_amount,
+    unit: backendHabit.unit,
+    streak: backendHabit.current_streak || 0,
+    createdAt: backendHabit.created_at,
+    isPrivate: !backendHabit.is_public,
+  };
+};
+
+// Map frontend habit to backend format
+const mapFrontendToBackend = (habit: Omit<Habit, 'id' | 'streak' | 'createdAt'>): Partial<BackendHabit> => {
+  // Map TrackingType to tracking_mode
+  let tracking_mode = 'tick';
+  if (habit.trackingType === 'variable_amount') {
+    tracking_mode = 'amount';
+  } else if (habit.trackingType === 'quit') {
+    tracking_mode = 'quit';
+  }
+
+  return {
+    name: habit.label,
+    emoji: habit.emoji,
+    color: habit.color,
+    tracking_mode,
+    target_amount: habit.target_amount,
+    unit: habit.unit,
+    duration_days: habit.duration_days,
+    is_public: !habit.isPrivate,
+  };
+};
+
 const HABITS_KEY = 'habits';
 
-// Get all habits from localStorage
-export const getHabits = (): Habit[] => {
+// Get all habits from backend API
+export const getHabits = async (): Promise<Habit[]> => {
+  try {
+    // Check if user is authenticated
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      // Not authenticated, return empty array
+      return [];
+    }
+
+    const response = await api.get<{ count: number; results: BackendHabit[] }>('/habits/');
+    const backendHabits = response.results || response; // Handle both paginated and non-paginated responses
+    
+    // Convert array if needed
+    const habitsArray = Array.isArray(backendHabits) ? backendHabits : [];
+    
+    const habits = habitsArray.map(mapBackendToFrontend);
+    
+    // Cache in localStorage for offline access
+    localStorage.setItem(HABITS_KEY, JSON.stringify(habits));
+    
+    return habits;
+  } catch (error) {
+    console.error('Failed to fetch habits:', error);
+    // Fallback to localStorage cache
+    const stored = localStorage.getItem(HABITS_KEY);
+    return stored ? JSON.parse(stored) : [];
+  }
+};
+
+// Get habits synchronously from cache (for hooks that need immediate data)
+export const getHabitsSync = (): Habit[] => {
   const stored = localStorage.getItem(HABITS_KEY);
   return stored ? JSON.parse(stored) : [];
 };
 
-// Set all habits
-export const setHabits = (habits: Habit[]): void => {
+// Set all habits (internal use, triggers event)
+const setHabits = (habits: Habit[]): void => {
   localStorage.setItem(HABITS_KEY, JSON.stringify(habits));
   // Trigger event for reactivity
   window.dispatchEvent(new Event('habitsChanged'));
 };
 
 // Add a new habit
-export const addHabit = (habit: Omit<Habit, 'id' | 'streak' | 'createdAt'>): Habit => {
-  const habits = getHabits();
-  const newHabit: Habit = {
-    ...habit,
-    id: `habit_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
-    streak: 0,
-    createdAt: new Date().toISOString(),
-  };
-  habits.push(newHabit);
-  setHabits(habits);
-  return newHabit;
+export const addHabit = async (habit: Omit<Habit, 'id' | 'streak' | 'createdAt'>): Promise<Habit> => {
+  try {
+    const backendData = mapFrontendToBackend(habit);
+    const response = await api.post<BackendHabit>('/habits/', backendData);
+    const newHabit = mapBackendToFrontend(response);
+    
+    // Update cache
+    const habits = getHabitsSync();
+    habits.push(newHabit);
+    setHabits(habits);
+    
+    return newHabit;
+  } catch (error) {
+    console.error('Failed to create habit:', error);
+    throw error;
+  }
 };
 
 // Get habit by ID
 export const getHabitById = (id: string): Habit | undefined => {
-  const habits = getHabits();
+  const habits = getHabitsSync();
   return habits.find(h => h.id === id);
 };
 
 // Update habit
-export const updateHabit = (id: string, updates: Partial<Habit>): void => {
-  const habits = getHabits();
-  const index = habits.findIndex(h => h.id === id);
-  if (index >= 0) {
-    habits[index] = { ...habits[index], ...updates };
-    setHabits(habits);
+export const updateHabit = async (id: string, updates: Partial<Habit>): Promise<void> => {
+  try {
+    const backendData: Partial<BackendHabit> = {};
+    
+    if (updates.label !== undefined) backendData.name = updates.label;
+    if (updates.emoji !== undefined) backendData.emoji = updates.emoji;
+    if (updates.color !== undefined) backendData.color = updates.color;
+    if (updates.duration_days !== undefined) backendData.duration_days = updates.duration_days;
+    if (updates.isPrivate !== undefined) backendData.is_public = !updates.isPrivate;
+    if (updates.trackingType !== undefined) {
+      if (updates.trackingType === 'variable_amount') {
+        backendData.tracking_mode = 'amount';
+      } else if (updates.trackingType === 'quit') {
+        backendData.tracking_mode = 'quit';
+      } else {
+        backendData.tracking_mode = 'tick';
+      }
+    }
+    if (updates.target_amount !== undefined) backendData.target_amount = updates.target_amount;
+    if (updates.unit !== undefined) backendData.unit = updates.unit;
+    
+    await api.put<BackendHabit>(`/habits/${id}/`, backendData);
+    
+    // Update cache
+    const habits = getHabitsSync();
+    const index = habits.findIndex(h => h.id === id);
+    if (index >= 0) {
+      habits[index] = { ...habits[index], ...updates };
+      setHabits(habits);
+    }
+  } catch (error) {
+    console.error('Failed to update habit:', error);
+    throw error;
   }
 };
 
@@ -115,12 +250,19 @@ const calculateQuestStats = (habitId: string, durationDays: number, createdAt: s
 };
 
 // Complete habit (when duration is over) and move to history
-export const completeHabit = (id: string): { stats: { highestStreak: number; daysCompleted: number; daysMissed: number }; habit: Habit } | null => {
-  const habits = getHabits();
+export const completeHabit = async (id: string): Promise<{ stats: { highestStreak: number; daysCompleted: number; daysMissed: number }; habit: Habit } | null> => {
+  const habits = getHabitsSync();
   const habitToComplete = habits.find(h => h.id === id);
 
   if (!habitToComplete) {
     return null;
+  }
+
+  try {
+    // Delete from backend
+    await api.delete(`/habits/${id}/`);
+  } catch (error) {
+    console.error('Failed to delete habit from backend:', error);
   }
 
   // Calculate quest statistics
@@ -159,11 +301,18 @@ export const completeHabit = (id: string): { stats: { highestStreak: number; day
 };
 
 // Delete habit and save to history
-export const deleteHabit = (id: string): void => {
-  const habits = getHabits();
+export const deleteHabit = async (id: string): Promise<void> => {
+  const habits = getHabitsSync();
   const habitToDelete = habits.find(h => h.id === id);
 
   if (habitToDelete) {
+    try {
+      // Delete from backend
+      await api.delete(`/habits/${id}/`);
+    } catch (error) {
+      console.error('Failed to delete habit from backend:', error);
+    }
+
     // Calculate quest statistics before deletion
     const stats = calculateQuestStats(id, habitToDelete.duration_days, habitToDelete.createdAt);
 
@@ -187,6 +336,6 @@ export const deleteHabit = (id: string): void => {
     addQuestToHistory(historyEntry);
   }
 
-  // Delete habit
+  // Delete habit from cache
   setHabits(habits.filter(h => h.id !== id));
 };

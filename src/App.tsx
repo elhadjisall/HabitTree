@@ -9,6 +9,7 @@ import TreeCharacter from './views/TreeCharacter';
 import Settings from './views/Settings';
 import Friends from './views/Friends';
 import FriendProfile from './views/FriendProfile';
+import FriendTree from './views/FriendTree';
 import { initializeDarkMode } from './utils/darkModeStorage';
 import './styles/global.css';
 import './App.css';
@@ -28,6 +29,7 @@ function AppContent() {
           <Route path="/tree" element={<TreeCharacter />} />
           <Route path="/friends" element={<Friends />} />
           <Route path="/friends/profile/:username" element={<FriendProfile />} />
+          <Route path="/friends/tree/:username" element={<FriendTree />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
       </main>
