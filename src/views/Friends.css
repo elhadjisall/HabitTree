@@ -1,0 +1,377 @@
+.friends-screen {
+  padding: var(--spacing-lg) var(--spacing-md);
+  padding-bottom: calc(70px + var(--spacing-lg));
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+}
+
+.friends-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+  padding: 0;
+}
+
+.friends-title {
+  margin: 0;
+  color: white;
+  background: linear-gradient(135deg, var(--theme-deep-forest), var(--theme-evergreen));
+  padding: var(--spacing-xs) var(--spacing-lg);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(10, 38, 2, 0.3);
+}
+
+.search-icon-button {
+  background: linear-gradient(135deg, #4a90e2, #357abd);
+  border: none;
+  border-radius: var(--radius-full);
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+  transition: all var(--transition-base);
+}
+
+.search-icon-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(74, 144, 226, 0.4);
+}
+
+/* Search container */
+.search-container {
+  margin-bottom: var(--spacing-lg);
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.search-input {
+  width: 100%;
+  padding: var(--spacing-md);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--bg-secondary);
+  font-size: var(--font-size-base);
+  color: var(--fg-primary);
+  transition: all var(--transition-base);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(106, 176, 76, 0.1);
+}
+
+.search-results {
+  margin-top: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.no-results {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--fg-secondary);
+  font-size: var(--font-size-base);
+}
+
+/* Friend Requests Section */
+.friend-requests-section {
+  margin-bottom: var(--spacing-xl);
+}
+
+.section-title {
+  color: var(--fg-primary);
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  margin-bottom: var(--spacing-md);
+  padding-left: var(--spacing-xs);
+}
+
+.friend-requests-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.request-capsule {
+  border: 2px solid var(--accent-primary);
+  background: var(--bg-secondary);
+}
+
+.request-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-shrink: 0;
+}
+
+.btn-accept {
+  background: linear-gradient(135deg, #6ab04c, #5a9a3c);
+  border: none;
+  border-radius: var(--radius-full);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: white;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.btn-accept:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(106, 176, 76, 0.4);
+}
+
+.btn-reject {
+  background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+  border: none;
+  border-radius: var(--radius-full);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: white;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.btn-reject:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+}
+
+/* Friends Section */
+.friends-section {
+  margin-bottom: var(--spacing-lg);
+}
+
+/* Friends list */
+.friends-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+/* Friend capsule - Full width mobile style */
+.friend-capsule {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-base);
+  cursor: pointer;
+  user-select: none;
+  width: 100%;
+  margin: 0;
+}
+
+.friend-capsule:active {
+  transform: scale(0.98);
+  background: var(--bg-tertiary);
+}
+
+.friend-capsule.search-result {
+  cursor: default;
+}
+
+.friend-capsule.search-result:active {
+  transform: none;
+  background: var(--bg-secondary);
+}
+
+.friend-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, #f0f0f0, #e0e0e0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  flex-shrink: 0;
+}
+
+.friend-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.friend-username {
+  font-weight: 600;
+  color: var(--fg-primary);
+  font-size: var(--font-size-base);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.friend-email {
+  font-size: var(--font-size-sm);
+  color: var(--fg-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.loading-text {
+  text-align: center;
+  padding: var(--spacing-md);
+  color: var(--fg-secondary);
+  font-size: var(--font-size-sm);
+  font-style: italic;
+}
+
+.friend-actions {
+  display: flex;
+  gap: var(--spacing-xs);
+  align-items: center;
+}
+
+.view-profile-button {
+  background: linear-gradient(135deg, #4a90e2, #357abd);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.view-profile-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+}
+
+.view-tree-button {
+  background: linear-gradient(135deg, #6ab04c, #5a9a3c);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.view-tree-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(106, 176, 76, 0.3);
+}
+
+.add-friend-button {
+  background: linear-gradient(135deg, #6ab04c, #5a9a3c);
+  border: none;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  flex-shrink: 0;
+}
+
+.add-friend-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(106, 176, 76, 0.3);
+}
+
+.add-friend-button.added {
+  background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+  cursor: not-allowed;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: var(--spacing-2xl) var(--spacing-lg);
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: var(--spacing-md);
+}
+
+.empty-state h3 {
+  color: var(--fg-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.empty-state p {
+  color: var(--fg-secondary);
+  font-size: var(--font-size-base);
+}
+
+/* Remove friend modal - Mobile bottom sheet */
+.remove-friend-modal {
+  width: 100%;
+  max-width: 100%;
+  text-align: center;
+}
+
+.remove-friend-modal h3 {
+  margin: 0 0 var(--spacing-md);
+  color: var(--fg-primary);
+  font-size: var(--font-size-xl);
+}
+
+.remove-friend-modal p {
+  color: var(--fg-secondary);
+  margin-bottom: var(--spacing-lg);
+  font-size: var(--font-size-base);
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+  color: white;
+  border: none;
+}
+
+.btn-secondary:hover {
+  background: linear-gradient(135deg, #7f8c8d, #6c7a7b);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(127, 140, 141, 0.3);
+}
+/* Match MainMenu mobile layout width on desktop */
+@media (min-width: 1025px) {
+  .friends-screen {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+}
+
