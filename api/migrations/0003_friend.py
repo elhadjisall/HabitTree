@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
             options={
                 'db_table': 'friends',
                 'indexes': [models.Index(fields=['user', 'status'], name='friends_user_id_71f36d_idx'), models.Index(fields=['friend', 'status'], name='friends_friend__1f35fd_idx'), models.Index(fields=['user', 'friend'], name='friends_user_id_020709_idx')],
-                'constraints': [models.CheckConstraint(condition=models.Q(('user', models.F('friend')), _negated=True), name='no_self_friend')],
+                'constraints': [models.CheckConstraint(check=models.Q(('user', models.F('friend')), _negated=True), name='no_self_friend')],
                 'unique_together': {('user', 'friend')},
             },
         ),
