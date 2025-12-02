@@ -176,5 +176,15 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
 ]
 
+# Allow Netlify deployments (add your specific Netlify URL)
+CORS_ALLOWED_ORIGINS.extend(
+    config('CORS_ALLOWED_ORIGINS', default='').split(',') if config('CORS_ALLOWED_ORIGINS', default='') else []
+)
+
+# Also allow all Netlify subdomains for convenience
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.netlify\.app$",
+]
+
 CORS_ALLOW_CREDENTIALS = True
 
