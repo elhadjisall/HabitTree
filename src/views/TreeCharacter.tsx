@@ -135,9 +135,11 @@ const TreeCharacter: React.FC = () => {
       if (result.success) {
         setLeafDollarsState(result.remainingLeafDollars);
         setLeafDollars(result.remainingLeafDollars);
+        // Update unlocked characters state immediately
+        setUnlockedIds(getUnlockedCharacterIds());
+        // Auto-select the newly purchased character
+        setSelectedCharacter(characterId);
         alert('Character unlocked! 🎉');
-        // Force re-render to show updated characters
-        window.location.reload();
       } else {
         alert(result.error || 'Failed to purchase character');
       }
@@ -213,6 +215,7 @@ const TreeCharacter: React.FC = () => {
                 <div className="character-placeholder">
                   {currentCharacter && (
                     <RiveCharacter
+                      key={`char-${selectedCharacter}`}
                       src={currentCharacter.animatedRivePath}
                       characterName={currentCharacter.name}
                     />
