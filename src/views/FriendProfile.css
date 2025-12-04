@@ -364,10 +364,28 @@
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(106, 176, 76, 0.3);
 }
-/* Match MainMenu mobile layout width on desktop */
+/* Desktop - Full width layout */
 @media (min-width: 1025px) {
   .friend-profile-screen {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: var(--spacing-2xl) var(--spacing-xl);
+    padding-bottom: calc(90px + var(--spacing-2xl));
+  }
+
+  .profile-header {
     max-width: 800px;
+    margin: 0 auto var(--spacing-lg);
+  }
+
+  .profile-card {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .profile-error {
+    max-width: 600px;
     margin: 0 auto;
   }
 }

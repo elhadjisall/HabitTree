@@ -522,20 +522,42 @@
 /* Desktop */
 @media (min-width: 1025px) {
   .main-menu {
-    max-width: 800px;
-    margin: 0 auto;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
     padding: var(--spacing-2xl) var(--spacing-xl);
     padding-bottom: calc(90px + var(--spacing-2xl));
   }
 
+  .menu-header {
+    max-width: 1200px;
+    margin: 0 auto var(--spacing-lg);
+  }
+
   .weekday-bar {
-    max-width: 600px;
+    max-width: 800px;
     margin-left: auto;
     margin-right: auto;
   }
 
+  .habits-list {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: var(--spacing-lg);
+  }
+
   .habit-card {
     padding: var(--spacing-xl);
+  }
+
+  .view-only-notice {
+    grid-column: 1 / -1;
+  }
+
+  .empty-state {
+    grid-column: 1 / -1;
   }
 }
 

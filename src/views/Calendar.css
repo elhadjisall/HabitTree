@@ -396,14 +396,21 @@
 /* Desktop */
 @media (min-width: 1025px) {
   .calendar-view {
-    max-width: 800px;
-    margin: 0 auto;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
     padding: var(--spacing-2xl) var(--spacing-xl);
     padding-bottom: calc(90px + var(--spacing-2xl));
   }
 
-  .calendar-controls {
-    max-width: 500px;
+  .calendar-header,
+  .calendar-controls,
+  .weekday-headers,
+  .calendar-grid,
+  .calendar-summary {
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .calendar-grid {

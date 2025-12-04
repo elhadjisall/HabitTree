@@ -578,10 +578,26 @@
 /* Desktop */
 @media (min-width: 1025px) {
   .tree-character {
-    max-width: 1000px;
-    margin: 0 auto;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
     padding: var(--spacing-2xl) var(--spacing-xl);
     padding-bottom: calc(90px + var(--spacing-2xl));
+  }
+
+  .top-controls {
+    max-width: 1200px;
+    margin: 0 auto var(--spacing-lg);
+  }
+
+  .visualization-area {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .bottom-controls {
+    max-width: 1200px;
+    margin: 0 auto;
   }
 
   .nature-background {

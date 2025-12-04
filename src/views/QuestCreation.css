@@ -405,14 +405,23 @@ input:disabled {
 /* Desktop */
 @media (min-width: 1025px) {
   .quest-creation {
-    max-width: 900px;
-    margin: 0 auto;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
     padding: var(--spacing-2xl) var(--spacing-xl);
     padding-bottom: calc(90px + var(--spacing-2xl));
   }
 
+  .creation-header,
+  .premade-section,
+  .custom-quest-btn {
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
   .premade-grid {
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   }
 
   .quest-icon {
@@ -422,6 +431,8 @@ input:disabled {
   }
 
   .custom-form-section {
+    max-width: 800px;
+    margin: 0 auto;
     padding: var(--spacing-2xl);
   }
 

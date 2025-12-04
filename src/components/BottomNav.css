@@ -134,19 +134,21 @@
 /* Desktop */
 @media (min-width: 1025px) {
   .bottom-nav {
-    height: 90px;
-    max-width: 800px;
-    left: 50%;
-    transform: translateX(-50%);
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    height: 80px;
+    left: 0;
+    right: 0;
+    transform: none;
+    border-radius: 0;
+    justify-content: center;
+    gap: var(--spacing-2xl);
   }
 
   .nav-item {
-    min-width: 80px;
+    min-width: 100px;
   }
 
   .nav-icon {
-    font-size: 2rem;
+    font-size: 1.75rem;
   }
 
   .nav-label {
@@ -154,8 +156,8 @@
   }
 
   .nav-item-create {
-    width: 72px;
-    height: 72px;
+    width: 64px;
+    height: 64px;
     bottom: 5px;
   }
 }
