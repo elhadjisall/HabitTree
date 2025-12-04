@@ -93,10 +93,18 @@ export const logout = (): void => {
   // Clear tokens
   clearTokens();
   
-  // Clear any cached data
+  // Clear ALL user-specific cached data
   localStorage.removeItem('habits');
   localStorage.removeItem('habitLogs');
   localStorage.removeItem('selectedCharacter');
+  localStorage.removeItem('leafDollars');
+  localStorage.removeItem('questHistory');
+  localStorage.removeItem('completedQuests');
+  localStorage.removeItem('unlockedCharacters');
+  localStorage.removeItem('companionSlots');
+  localStorage.removeItem('userProfile');
+  localStorage.removeItem('friends');
+  localStorage.removeItem('friendRequests');
   
   // Clear habits cache by triggering event
   window.dispatchEvent(new Event('habitsChanged'));

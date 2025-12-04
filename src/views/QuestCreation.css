@@ -298,7 +298,7 @@ input:disabled {
   font-weight: 600;
 }
 
-/* Confirmation Modal - Mobile styled, above bottom bar */
+/* Confirmation Modal - Centered in viewport, above everything */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -311,8 +311,10 @@ input:disabled {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: 99999;
   padding: var(--spacing-lg);
+  /* Ensure it's above the bottom nav */
+  padding-bottom: 0;
 }
 
 .modal-content {
@@ -325,7 +327,9 @@ input:disabled {
   text-align: center;
   animation: modalSlideIn 0.3s ease-out;
   position: relative;
-  z-index: 10000;
+  z-index: 100000;
+  /* Center vertically in viewport, ignoring bottom nav */
+  margin-bottom: 70px;
 }
 
 @keyframes modalSlideIn {

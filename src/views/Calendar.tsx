@@ -186,14 +186,17 @@ const Calendar: React.FC = () => {
 
     // Check if this day is in the future
     const dayDate = new Date(selectedYear, selectedMonth, day);
-    const isFuture = dayDate > currentDate;
+    dayDate.setHours(0, 0, 0, 0); // Reset to start of day for comparison
+    
+    const todayDate = new Date();
+    todayDate.setHours(23, 59, 59, 999); // End of today for future comparison
+    const isFuture = dayDate > todayDate;
 
     // Check if this day is before habit was created
-    let isBeforeHabitStart = false;
-    if (selectedHabitData) {
+    let isBeforeHabitStart = true; // Default to true (no habit selected = all days are "before")
+    if (selectedHabitData && selectedHabitData.createdAt) {
       const habitStartDate = new Date(selectedHabitData.createdAt);
       habitStartDate.setHours(0, 0, 0, 0); // Reset to start of day
-      dayDate.setHours(0, 0, 0, 0); // Reset to start of day
       isBeforeHabitStart = dayDate < habitStartDate;
     }
 
@@ -211,7 +214,8 @@ const Calendar: React.FC = () => {
       }
     }
 
-    const isMissed = !isCompleted && !isFuture && !monthHasNoData && !isBeforeHabitStart;
+    // Only mark as missed if: not completed, not future, has data, AND not before habit start
+    const isMissed = !isCompleted && !isFuture && !monthHasNoData && !isBeforeHabitStart && !isToday;
     const canRevive = isMissed && !log?.wasRevived;
 
     calendarDays.push(

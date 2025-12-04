@@ -31,12 +31,12 @@ interface FormDataState {
 const Settings: React.FC = () => {
   const userProfile = getUserProfile();
   const habits = useHabits();
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [profile, setProfile] = useState<ProfileState>({
-    username: userProfile.username,
-    email: 'user@example.com',
-    profilePicture: userProfile.avatar,
+    username: '', // Start empty to avoid flicker
+    email: '',
+    profilePicture: '',
   });
-  const [, setLoading] = useState<boolean>(true);
 
   // Fetch user data from backend on mount
   useEffect(() => {
@@ -61,11 +61,24 @@ const Settings: React.FC = () => {
             email: user.email,
             profilePicture: avatarPath,
           });
+        } else {
+          // Fallback to local storage profile if no user
+          setProfile({
+            username: userProfile.username,
+            email: 'user@example.com',
+            profilePicture: userProfile.avatar,
+          });
         }
       } catch (error) {
         console.error('Failed to fetch user data:', error);
+        // Fallback to local storage profile on error
+        setProfile({
+          username: userProfile.username,
+          email: 'user@example.com',
+          profilePicture: userProfile.avatar,
+        });
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
     fetchUserData();
@@ -229,6 +242,20 @@ const Settings: React.FC = () => {
 
   // Get public habits for current quests view
   const publicHabits = habits.filter(habit => !habit.isPrivate);
+
+  // Show loading state until data is ready
+  if (isLoading) {
+    return (
+      <div className="settings">
+        <header className="settings-header">
+          <h1>Settings</h1>
+        </header>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px', color: 'var(--fg-secondary)' }}>
+          Loading...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="settings">

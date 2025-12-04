@@ -32,14 +32,26 @@ const Friends: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [initialLoading, setInitialLoading] = useState<boolean>(true); // Track initial load
   const [showRemoveModal, setShowRemoveModal] = useState<boolean>(false);
   const [selectedFriend, setSelectedFriend] = useState<User | null>(null);
   const longPressTimer = useRef<number | null>(null);
 
-  // Load friends and requests on mount
+  // Load friends and requests on mount, then poll for updates
   useEffect(() => {
-    loadFriends();
-    loadRequests();
+    const loadData = async () => {
+      await Promise.all([loadFriends(), loadRequests()]);
+      setInitialLoading(false);
+    };
+    loadData();
+
+    // Poll for updates every 5 seconds for real-time friend updates
+    const pollInterval = setInterval(() => {
+      loadFriends();
+      loadRequests();
+    }, 5000);
+
+    return () => clearInterval(pollInterval);
   }, []);
 
   const loadFriends = async (): Promise<void> => {
@@ -318,7 +330,12 @@ const Friends: React.FC = () => {
       <div className="friends-section">
         <h2 className="section-title">Friends</h2>
         <div className="friends-list">
-          {friends.length === 0 ? (
+          {initialLoading ? (
+            <div className="empty-state">
+              <div className="empty-icon">⏳</div>
+              <h3>Loading friends...</h3>
+            </div>
+          ) : friends.length === 0 ? (
             <div className="empty-state">
               <div className="empty-icon">👥</div>
               <h3>No friends yet</h3>
