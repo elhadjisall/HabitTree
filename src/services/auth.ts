@@ -2,6 +2,7 @@
 
 import { api, setTokens, clearTokens } from './api';
 import { initializeFirstCharacter, getSelectedCharacter } from '../utils/charactersStorage';
+import { setLeafDollars } from '../utils/leafDollarsStorage';
 
 export interface LoginCredentials {
   email: string;
@@ -56,6 +57,11 @@ export const login = async (credentials: LoginCredentials): Promise<{ access: st
   // Get user info
   const user = await api.get<User>('/users/me/');
   
+  // Sync leaf dollars from backend to localStorage
+  if (user.leaf_dollars !== undefined) {
+    setLeafDollars(user.leaf_dollars);
+  }
+  
   return {
     access: data.access,
     refresh: data.refresh,
@@ -105,21 +111,22 @@ export const register = async (data: RegisterData): Promise<{ access: string; re
 
 // Logout
 export const logout = (): void => {
-  // Clear tokens
+  // Clear tokens only - keep user data in localStorage
+  // Data will be synced from backend on next login
   clearTokens();
   
-  // Clear ALL user-specific cached data
+  // Only clear session-related caches, NOT persistent user data
   localStorage.removeItem('habits');
   localStorage.removeItem('habitLogs');
-  localStorage.removeItem('selectedCharacter');
-  localStorage.removeItem('leafDollars');
-  localStorage.removeItem('questHistory');
-  localStorage.removeItem('completedQuests');
-  localStorage.removeItem('unlockedCharacters');
-  localStorage.removeItem('companionSlots');
-  localStorage.removeItem('userProfile');
   localStorage.removeItem('friends');
   localStorage.removeItem('friendRequests');
+  
+  // DO NOT clear these - they should persist and sync with backend:
+  // - leafDollars
+  // - selectedCharacter
+  // - unlockedCharacters
+  // - userProfile
+  // - companionSlots
   
   // Clear habits cache by triggering event
   window.dispatchEvent(new Event('habitsChanged'));
