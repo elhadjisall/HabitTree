@@ -11,35 +11,19 @@ import {
 } from '../utils/charactersStorage';
 import { useRive } from '@rive-app/react-canvas';
 
-// Characters with Rive animations available
-const CHARACTERS_WITH_RIVE = ['Ban']; // Only Ban has Rive animation for now
-
-// Rive Character Animation Component
+// Rive Character Animation Component - All characters now have Rive animations
 interface RiveCharacterProps {
   src: string;
   characterName: string;
-  iconPath: string;
 }
 
-const RiveCharacter: React.FC<RiveCharacterProps> = ({ src, characterName, iconPath }) => {
-  // Check if this character has a Rive animation
-  const hasRiveAnimation = CHARACTERS_WITH_RIVE.includes(characterName);
-  
-  if (!hasRiveAnimation) {
-    // Show static icon for characters without Rive animation
-    return (
-      <div className="character-static">
-        <img src={iconPath} alt={characterName} className="character-static-img" />
-      </div>
-    );
-  }
-  
+const RiveCharacter: React.FC<RiveCharacterProps> = ({ src, characterName }) => {
   const { RiveComponent } = useRive({
     src: src,
     autoplay: true,
   });
 
-  return <RiveComponent className="character-rive" />;
+  return <RiveComponent className="character-rive" aria-label={`${characterName} animation`} />;
 };
 
 // Rive Tree Animation Component
@@ -222,7 +206,6 @@ const TreeCharacter: React.FC = () => {
                     <RiveCharacter
                       src={currentCharacter.animatedRivePath}
                       characterName={currentCharacter.name}
-                      iconPath={currentCharacter.iconPath}
                     />
                   )}
                   <p className="character-name">{currentCharacter?.name}</p>

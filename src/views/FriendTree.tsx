@@ -4,6 +4,7 @@ import './TreeCharacter.css';
 import './FriendProfile.css';
 import { getFriendProfileByUsername, type FriendProfile } from '../services/friends';
 import { useRive } from '@rive-app/react-canvas';
+import { BASE_CHARACTERS } from '../utils/charactersStorage';
 
 // Get tree level based on progress (0-10%, 11-20%, ..., 91-100%)
 const getTreeLevel = (progress: number): number => {
@@ -31,6 +32,27 @@ const RiveTree: React.FC<RiveTreeProps> = ({ level }) => {
   });
 
   return <RiveComponent className="tree-rive" />;
+};
+
+// Rive Character Animation Component
+interface RiveCharacterProps {
+  src: string;
+  characterName: string;
+}
+
+const RiveCharacter: React.FC<RiveCharacterProps> = ({ src, characterName }) => {
+  const { RiveComponent } = useRive({
+    src: src,
+    autoplay: true,
+  });
+
+  return <RiveComponent className="character-rive" aria-label={`${characterName} animation`} />;
+};
+
+// Find character by avatar URL
+const findCharacterByAvatar = (avatarUrl: string | undefined) => {
+  if (!avatarUrl) return null;
+  return BASE_CHARACTERS.find(char => char.iconPath === avatarUrl);
 };
 
 const FriendTree: React.FC = () => {
@@ -133,6 +155,9 @@ const FriendTree: React.FC = () => {
   const selectedHabit = profile.public_habits.find(h => h.id === selectedHabitId) || profile.public_habits[0];
   const currentProgress = selectedHabit ? selectedHabit.progress : 0;
   const mainAvatar = user.avatar_url || (profile.characters && profile.characters.length > 0 ? profile.characters[0] : '');
+  
+  // Find the character to get its Rive animation path
+  const friendCharacter = findCharacterByAvatar(mainAvatar);
 
   return (
     <div className="tree-character">
@@ -190,7 +215,12 @@ const FriendTree: React.FC = () => {
               {/* Character on the right */}
               <div className="character-container">
                 <div className="character-placeholder">
-                  {mainAvatar && (mainAvatar.startsWith('/') || mainAvatar.startsWith('http')) ? (
+                  {friendCharacter ? (
+                    <RiveCharacter
+                      src={friendCharacter.animatedRivePath}
+                      characterName={friendCharacter.name}
+                    />
+                  ) : mainAvatar && (mainAvatar.startsWith('/') || mainAvatar.startsWith('http')) ? (
                     <div className="character-static">
                       <img 
                         src={mainAvatar} 
