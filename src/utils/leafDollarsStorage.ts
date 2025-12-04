@@ -1,6 +1,6 @@
 // Global Leaf Dollar storage
 const LEAF_DOLLARS_KEY = 'leafDollars';
-const DEFAULT_LEAF_DOLLARS = 50; // New users start with 50 leaf dollars
+const DEFAULT_LEAF_DOLLARS = 150; // New users start with 150 leaf dollars
 
 export const getLeafDollars = (): number => {
   const stored = localStorage.getItem(LEAF_DOLLARS_KEY);

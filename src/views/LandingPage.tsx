@@ -350,7 +350,7 @@ const LandingPage: React.FC = () => {
 
               {!isLogin && (
                 <div className="bonus-banner">
-                  🎁 Start with <span>50 Leaf Dollars</span> bonus!
+                  🎁 Start with <span>150 Leaf Dollars</span> bonus!
                 </div>
               )}
             </form>

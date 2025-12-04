@@ -9,7 +9,7 @@ class User(AbstractUser):
     email = models.EmailField(unique=True)
     display_name = models.CharField(max_length=100, blank=True, null=True)
     avatar_url = models.CharField(max_length=500, blank=True, null=True)  # Path to selected character icon
-    leaf_dollars = models.IntegerField(default=50)  # New users start with 50 leaf dollars
+    leaf_dollars = models.IntegerField(default=150)  # New users start with 150 leaf dollars
     unlocked_characters = models.JSONField(default=list, blank=True)  # List of unlocked character IDs
     selected_character = models.IntegerField(default=1, null=True)  # Currently selected character ID
     is_active = models.BooleanField(default=True)
