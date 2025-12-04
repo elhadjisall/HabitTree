@@ -74,7 +74,8 @@ WSGI_APPLICATION = 'habittree.wsgi.application'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 # Support Railway's DATABASE_URL or individual environment variables
-DATABASE_URL = config('DATABASE_URL', default=None)
+# Use os.environ directly for Railway compatibility
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
 if DATABASE_URL:
     # Parse DATABASE_URL (Railway format: postgresql://user:password@host:port/dbname)
@@ -95,11 +96,11 @@ else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': config('DB_NAME', default='habittree'),
-            'USER': config('DB_USER', default='postgres'),
-            'PASSWORD': config('DB_PASSWORD', default=''),
-            'HOST': config('DB_HOST', default='localhost'),
-            'PORT': config('DB_PORT', default='5432'),
+            'NAME': os.environ.get('DB_NAME', 'habittree'),
+            'USER': os.environ.get('DB_USER', 'postgres'),
+            'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+            'HOST': os.environ.get('DB_HOST', 'localhost'),
+            'PORT': os.environ.get('DB_PORT', '5432'),
         }
     }
 
