@@ -38,8 +38,12 @@ export const setHabitLogs = (logs: HabitLog[]): void => {
 export const syncHabitLogsFromBackend = async (): Promise<void> => {
   try {
     const token = localStorage.getItem('auth_token');
-    if (!token) return;
+    if (!token) {
+      console.log('No auth token, skipping habit logs sync');
+      return;
+    }
 
+    console.log('Syncing habit logs from backend...');
     const response = await api.get<{
       logs: BackendLog[];
       leaf_dollars: number;
@@ -47,7 +51,9 @@ export const syncHabitLogsFromBackend = async (): Promise<void> => {
       selected_character: number;
     }>('/habits/all_logs/');
 
-    if (response.logs) {
+    console.log('Backend response:', response);
+
+    if (response.logs && response.logs.length > 0) {
       // Convert backend logs to frontend format
       const frontendLogs: HabitLog[] = response.logs.map(log => ({
         habitId: log.habit_id,
@@ -56,19 +62,11 @@ export const syncHabitLogsFromBackend = async (): Promise<void> => {
         value: log.amount_done || undefined,
       }));
 
-      // Merge with existing local logs (keep wasRevived flags)
-      const existingLogs = getHabitLogs();
-      const mergedLogs = frontendLogs.map(newLog => {
-        const existingLog = existingLogs.find(
-          l => String(l.habitId) === String(newLog.habitId) && l.date === newLog.date
-        );
-        return {
-          ...newLog,
-          wasRevived: existingLog?.wasRevived || false
-        };
-      });
-
-      setHabitLogs(mergedLogs);
+      console.log('Converted logs:', frontendLogs);
+      setHabitLogs(frontendLogs);
+      console.log('Habit logs synced successfully, count:', frontendLogs.length);
+    } else {
+      console.log('No habit logs from backend');
     }
   } catch (error) {
     console.error('Failed to sync habit logs from backend:', error);

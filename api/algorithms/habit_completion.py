@@ -26,43 +26,25 @@ def get_today_completion(habit):
         return None
 
 
-def calculate_leaf_dollars_reward(streak_before, streak_after, is_completion=True):
+def calculate_leaf_dollars_reward(is_new_completion=True):
     """
-    Calculate leaf dollars reward based on completion and streak milestones.
-    Per spec: "Each completed day gives a small reward"
-    Also awards bonus for streak milestones.
+    Calculate leaf dollars reward for completing a habit.
+    Simple: 1 leaf dollar per completion.
     
     Args:
-        streak_before: Streak count before completion
-        streak_after: Streak count after completion
-        is_completion: Whether this is a new completion (True) or just streak update (False)
+        is_new_completion: Whether this is a new completion (True) or already completed (False)
         
     Returns:
-        int: Leaf dollars to award
+        int: Leaf dollars to award (1 if new completion, 0 otherwise)
     """
-    reward = 0
-    
-    # Base reward for completing a day (per spec requirement)
-    if is_completion:
-        reward += 1  # Small reward for each completed day
-    
-    # Bonus rewards for streak milestones (in addition to base reward)
-    if streak_after > streak_before:
-        if streak_after >= 100:
-            reward += 200  # Bonus for 100-day streak
-        elif streak_after >= 30:
-            reward += 50   # Bonus for monthly streak
-        elif streak_after >= 7:
-            reward += 10   # Bonus for weekly streak
-        elif streak_after > 0:
-            reward += 4    # Additional reward for maintaining/starting streak (total 5 with base)
-    
-    return reward
+    if is_new_completion:
+        return 1  # 1 leaf dollar per completed day
+    return 0
 
 
 def mark_habit_complete(habit, notes='', amount_done=None):
     """
-    Mark a habit as complete for today and award leaf dollars for streaks.
+    Mark a habit as complete for today and award leaf dollars.
     
     Args:
         habit: Habit instance
@@ -74,39 +56,47 @@ def mark_habit_complete(habit, notes='', amount_done=None):
     """
     today = timezone.now().date()
     
-    # Get streak before completion
-    streak_before = habit.current_streak or 0
+    # Check if already completed today BEFORE creating/updating
+    existing_log = None
+    try:
+        existing_log = habit.logs.get(log_date=today)
+        was_already_completed = existing_log.status == 'completed'
+    except habit.logs.model.DoesNotExist:
+        was_already_completed = False
     
-    # Check if already completed today
-    log, created = habit.logs.get_or_create(
-        log_date=today,
-        defaults={'status': 'completed', 'note': notes, 'amount_done': amount_done}
-    )
-    
-    if not created:
-        # If already completed, don't award again
-        if log.status == 'completed':
+    # Create or update the log
+    if existing_log:
+        # Already has a log for today
+        if was_already_completed:
+            # Already completed - don't award again
             return {
-                'completion': log,
+                'completion': existing_log,
                 'leaf_dollars_earned': 0,
-                'new_streak': habit.current_streak
+                'new_streak': habit.current_streak or 0
             }
-        log.status = 'completed'
-        log.note = notes
+        # Update existing log to completed
+        existing_log.status = 'completed'
+        existing_log.note = notes
         if amount_done is not None:
-            log.amount_done = amount_done
-        log.save()
+            existing_log.amount_done = amount_done
+        existing_log.save()
+        log = existing_log
+    else:
+        # Create new log
+        log = habit.logs.create(
+            log_date=today,
+            status='completed',
+            note=notes,
+            amount_done=amount_done
+        )
     
     # Update habit streak and last completed date
     habit.last_completed_date = today
     update_streak(habit)
     habit.save()
     
-    # Calculate leaf dollars reward
-    streak_after = habit.current_streak
-    # Only award if this is a new completion (not already completed)
-    is_new_completion = created or (not created and log.status != 'completed')
-    leaf_dollars_earned = calculate_leaf_dollars_reward(streak_before, streak_after, is_completion=is_new_completion)
+    # Award 1 leaf dollar for this new completion
+    leaf_dollars_earned = calculate_leaf_dollars_reward(is_new_completion=True)
     
     # Award leaf dollars to user
     if leaf_dollars_earned > 0:
@@ -116,7 +106,7 @@ def mark_habit_complete(habit, notes='', amount_done=None):
     return {
         'completion': log,
         'leaf_dollars_earned': leaf_dollars_earned,
-        'new_streak': streak_after
+        'new_streak': habit.current_streak or 0
     }
 
 
