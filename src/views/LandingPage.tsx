@@ -83,23 +83,23 @@ const LandingPage: React.FC = () => {
   const features = [
     {
       emoji: '🌳',
-      title: 'Visual Streak Growth',
-      description: 'Watch your habits transform into beautiful trees. The longer your streak, the mightier your forest!'
+      title: 'Start Your Sapling',
+      description: 'Every habit begins as a tiny seed. Watch it grow day by day.'
     },
     {
       emoji: '🍃',
       title: 'Earn Leaf Dollars',
-      description: 'Complete habits to earn currency. Spend it on unlocking adorable character companions!'
+      description: 'Every completed habit drops virtual leaves you can collect and spend to buy characters!'
     },
     {
-      emoji: '🌟',
+      emoji: '🐸',
       title: 'Unlock Cool Characters',
-      description: 'Collect cute companions that cheer you on. Each character brings unique motivation vibes!'
+      description: 'Playful buddies who celebrate every small victory with you!'
     },
     {
       emoji: '📈',
       title: 'Track Your Progress',
-      description: 'Beautiful charts and insights to see how far you\'ve come on your habit journey.'
+      description: 'See your consistency at a glance with our calendar.'
     }
   ];
 
@@ -142,8 +142,8 @@ const LandingPage: React.FC = () => {
           </h1>
 
           <p className="hero-text">
-            Build powerful habits and watch your personal forest flourish. 
-            Earn Leaf Dollars 🍃, unlock adorable companions, and visualize your growth journey!
+            Build powerful habits. 
+            Earn Leaf Dollars 🍃, unlock cool character, and visualize your growth journey!
           </p>
 
           <div className="hero-buttons">
@@ -202,7 +202,7 @@ const LandingPage: React.FC = () => {
                 <span className="tree-emoji">🏞️</span>
               </div>
               <p className="tree-label">Day 90+</p>
-              <p className="tree-name">Ancient Forest</p>
+              <p className="tree-name">Tree grows forever</p>
               <p className="tree-reward">+100 🍃</p>
             </div>
           </div>
@@ -221,9 +221,9 @@ const LandingPage: React.FC = () => {
         <section className="banner-section">
           <div className="banner-container">
             <div className="banner-content">
-              <h2 className="banner-title">Ready to Grow Your Forest?</h2>
+              <h2 className="banner-title">Ready to plant your first seed?</h2>
               <p className="banner-text">
-                Join thousands of users who have transformed their habits into beautiful forests. 
+                Join thousands of users who have transformed their habits and have beautiful companionships. 
                 Start your journey today and watch your personal growth blossom!
               </p>
               <button onClick={() => openModal(false)} className="btn-primary-lg">
@@ -231,8 +231,7 @@ const LandingPage: React.FC = () => {
               </button>
             </div>
             <div className="banner-image-placeholder">
-              <span className="banner-image-text">Your Forest Awaits</span>
-              <img src={bannerImage} alt="Beautiful forest representation" className="banner-image" />
+                  <img src={bannerImage} alt="Representation of character" className="banner-image" />
             </div>
           </div>
         </section>
