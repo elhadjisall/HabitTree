@@ -112,20 +112,16 @@ export const getUnlockedCharacterIcons = (): string[] => {
   return getUnlockedCharacters().map(char => char.iconPath);
 };
 
-// Initialize first character for new users - syncs with backend
+// Initialize first character for new users OR sync existing characters from backend
+// This function always checks the backend first to ensure characters are restored after logout
 export const initializeFirstCharacter = async (): Promise<Character | null> => {
-  const stored = localStorage.getItem(UNLOCKED_CHARACTERS_KEY);
-  if (stored && JSON.parse(stored).length > 0) {
-    // Already initialized
-    return getSelectedCharacter();
-  }
-  
-  // No characters unlocked yet - assign random first character
+  // Generate a random character in case we need to create one
   const randomIndex = Math.floor(Math.random() * BASE_CHARACTERS.length);
   const firstCharacter = BASE_CHARACTERS[randomIndex];
 
   try {
-    // Sync with backend
+    // Always call backend to check/initialize characters
+    // The backend will return existing characters if user already has them
     const response = await api.post<{
       success: boolean;
       unlocked_characters: number[];
@@ -138,24 +134,26 @@ export const initializeFirstCharacter = async (): Promise<Character | null> => {
       icon_path: firstCharacter.iconPath
     });
     
-    if (response.already_initialized) {
-      // Backend already has characters, sync to localStorage
-      syncCharactersFromBackend(response.unlocked_characters, response.selected_character);
-      return getCharacterById(response.selected_character) || firstCharacter;
-    }
+    // Sync characters from backend to localStorage (whether new or existing)
+    syncCharactersFromBackend(response.unlocked_characters, response.selected_character);
     
-    // Update localStorage
-    localStorage.setItem(UNLOCKED_CHARACTERS_KEY, JSON.stringify(response.unlocked_characters));
-    localStorage.setItem(SELECTED_CHARACTER_KEY, String(response.selected_character));
-    
+    // Update profile with avatar
     const profile = getUserProfile();
-    profile.avatar = response.avatar_url || firstCharacter.iconPath;
+    profile.avatar = response.avatar_url || getCharacterById(response.selected_character)?.iconPath || firstCharacter.iconPath;
     saveUserProfile(profile);
     
-    return firstCharacter;
+    // Return the selected character
+    return getCharacterById(response.selected_character) || firstCharacter;
   } catch (error) {
     console.error('Failed to initialize character on backend:', error);
-    // Fallback to local-only initialization
+    
+    // Check if we have characters in localStorage as fallback
+    const stored = localStorage.getItem(UNLOCKED_CHARACTERS_KEY);
+    if (stored && JSON.parse(stored).length > 0) {
+      return getSelectedCharacter();
+    }
+    
+    // Last resort: local-only initialization
     localStorage.setItem(UNLOCKED_CHARACTERS_KEY, JSON.stringify([firstCharacter.id]));
     localStorage.setItem(SELECTED_CHARACTER_KEY, String(firstCharacter.id));
     

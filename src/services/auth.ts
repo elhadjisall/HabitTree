@@ -61,26 +61,22 @@ export const login = async (credentials: LoginCredentials): Promise<{ access: st
   const user = await api.get<User>('/users/me/');
   
   // Sync ALL user data from backend to localStorage
-  // 1. Leaf dollars
-  if (user.leaf_dollars !== undefined) {
-    setLeafDollars(user.leaf_dollars);
-  }
+  // 1. Leaf dollars - always sync from backend
+  setLeafDollars(user.leaf_dollars ?? 50);
   
   // 2. Unlocked characters and selected character
-  if (user.unlocked_characters && user.unlocked_characters.length > 0) {
-    syncCharactersFromBackend(user.unlocked_characters, user.selected_character || null);
-  } else {
-    // No characters yet - initialize first character
-    await initializeFirstCharacter();
-  }
+  // Always call initializeFirstCharacter - it will check backend and sync properly
+  // This handles both new users AND existing users whose data needs to be restored
+  const selectedChar = await initializeFirstCharacter();
   
-  // 3. User profile
-  if (user.display_name || user.avatar_url) {
-    saveUserProfile({
-      username: user.display_name || user.username,
-      avatar: user.avatar_url || ''
-    });
-  }
+  // If backend already had characters, initializeFirstCharacter syncs them
+  // If not, it creates a new one. Either way, localStorage is now correct.
+  
+  // 3. User profile - sync from backend
+  saveUserProfile({
+    username: user.display_name || user.username,
+    avatar: user.avatar_url || selectedChar?.iconPath || ''
+  });
   
   // 4. Sync habit logs from backend (completed habits)
   await syncHabitLogsFromBackend();
@@ -134,22 +130,20 @@ export const register = async (data: RegisterData): Promise<{ access: string; re
 
 // Logout
 export const logout = (): void => {
-  // Clear tokens only - keep user data in localStorage
-  // Data will be synced from backend on next login
+  // Clear tokens
   clearTokens();
   
-  // Only clear session-related caches, NOT persistent user data
+  // Clear ALL user data from localStorage
+  // Data will be synced fresh from backend on next login
   localStorage.removeItem('habits');
   localStorage.removeItem('habitLogs');
   localStorage.removeItem('friends');
   localStorage.removeItem('friendRequests');
-  
-  // DO NOT clear these - they should persist and sync with backend:
-  // - leafDollars
-  // - selectedCharacter
-  // - unlockedCharacters
-  // - userProfile
-  // - companionSlots
+  localStorage.removeItem('leafDollars');
+  localStorage.removeItem('selectedCharacter');
+  localStorage.removeItem('unlockedCharacters');
+  localStorage.removeItem('userProfile');
+  localStorage.removeItem('companionSlots');
   
   // Clear habits cache by triggering event
   window.dispatchEvent(new Event('habitsChanged'));
