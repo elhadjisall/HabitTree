@@ -26,9 +26,14 @@ export interface User {
   last_login?: string;
 }
 
+// Get API base URL
+const getApiBaseUrl = () => {
+  return import.meta.env.VITE_API_URL || '/api';
+};
+
 // Login
 export const login = async (credentials: LoginCredentials): Promise<{ access: string; refresh: string; user: User }> => {
-  const response = await fetch('http://localhost:8000/api/auth/token/', {
+  const response = await fetch(`${getApiBaseUrl()}/auth/token/`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -59,7 +64,7 @@ export const login = async (credentials: LoginCredentials): Promise<{ access: st
 
 // Register
 export const register = async (data: RegisterData): Promise<{ access: string; refresh: string; user: User }> => {
-  const response = await fetch('http://localhost:8000/api/users/', {
+  const response = await fetch(`${getApiBaseUrl()}/users/`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

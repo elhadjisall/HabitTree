@@ -178,15 +178,18 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
 ]
 
-# Allow Netlify deployments (add your specific Netlify URL)
-CORS_ALLOWED_ORIGINS.extend(
-    config('CORS_ALLOWED_ORIGINS', default='').split(',') if config('CORS_ALLOWED_ORIGINS', default='') else []
-)
+# Allow Netlify deployments from environment variable
+extra_origins = os.environ.get('CORS_ALLOWED_ORIGINS', '')
+if extra_origins:
+    CORS_ALLOWED_ORIGINS.extend([origin.strip() for origin in extra_origins.split(',') if origin.strip()])
 
-# Also allow all Netlify subdomains for convenience
+# Also allow all Netlify and Railway subdomains for convenience
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://.*\.netlify\.app$",
+    r"^https://.*\.up\.railway\.app$",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = ['*']
+CORS_ALLOW_METHODS = ['DELETE', 'GET', 'OPTIONS', 'PATCH', 'POST', 'PUT']
 
