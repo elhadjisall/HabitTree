@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './Settings.css';
 import { getDarkMode, setDarkMode } from '../utils/darkModeStorage';
-import { getUserProfile, updateUsername, updateAvatar, getUnlockedCharacters, getCharacterById, getSelectedCharacter } from '../utils/charactersStorage';
+import { getUserProfile, updateUsername, selectCharacter, getUnlockedCharacters, getCharacterById, getSelectedCharacter } from '../utils/charactersStorage';
 import { getCompanionSlots, setCompanionSlots, getMaxCompanionSlots } from '../utils/companionSlotsStorage';
 import { useHabits } from '../hooks/useHabits';
 import { getCurrentUser, updateUserProfile, logout } from '../services/auth';
@@ -187,13 +187,11 @@ const Settings: React.FC = () => {
     const character = getCharacterById(characterId);
     if (character) {
       try {
-        // Send the relative path directly (backend now accepts CharField)
-        // The iconPath is like '/assets/characters/mape-icon.png'
-        await updateUserProfile({ avatar_url: character.iconPath });
+        // Use selectCharacter which syncs with backend
+        await selectCharacter(characterId);
         
         // Update local state immediately
         setProfile({ ...profile, profilePicture: character.iconPath });
-        updateAvatar(characterId); // Also update local storage
         setShowProfilePicturePicker(false);
         
         // Refresh user data to confirm update

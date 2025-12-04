@@ -1,4 +1,7 @@
 // Character ownership and avatar storage utilities
+// Now syncs with backend database for persistence across devices
+
+import { api } from '../services/api';
 
 export interface Character {
   id: number;
@@ -72,16 +75,36 @@ export const BASE_CHARACTERS: Character[] = [
 ];
 
 const UNLOCKED_CHARACTERS_KEY = 'unlockedCharacters';
+const SELECTED_CHARACTER_KEY = 'selectedCharacter';
 const USER_PROFILE_KEY = 'userProfile';
 
-// Get unlocked characters
+// Sync unlocked characters from backend to localStorage
+export const syncCharactersFromBackend = (unlockedIds: number[], selectedId: number | null): void => {
+  if (unlockedIds && unlockedIds.length > 0) {
+    localStorage.setItem(UNLOCKED_CHARACTERS_KEY, JSON.stringify(unlockedIds));
+  }
+  if (selectedId) {
+    localStorage.setItem(SELECTED_CHARACTER_KEY, String(selectedId));
+  }
+};
+
+// Get unlocked characters (from localStorage, synced with backend)
 export const getUnlockedCharacters = (): Character[] => {
   const stored = localStorage.getItem(UNLOCKED_CHARACTERS_KEY);
   if (stored) {
     const unlockedIds = JSON.parse(stored) as number[];
-    return BASE_CHARACTERS.filter(char => char.unlocked || unlockedIds.includes(char.id));
+    return BASE_CHARACTERS.filter(char => unlockedIds.includes(char.id));
   }
-  return BASE_CHARACTERS.filter(char => char.unlocked);
+  return [];
+};
+
+// Get unlocked character IDs
+export const getUnlockedCharacterIds = (): number[] => {
+  const stored = localStorage.getItem(UNLOCKED_CHARACTERS_KEY);
+  if (stored) {
+    return JSON.parse(stored) as number[];
+  }
+  return [];
 };
 
 // Get unlocked character icon paths only
@@ -89,23 +112,134 @@ export const getUnlockedCharacterIcons = (): string[] => {
   return getUnlockedCharacters().map(char => char.iconPath);
 };
 
-// Initialize first character - called on first app load
-export const initializeFirstCharacter = (): void => {
+// Initialize first character for new users - syncs with backend
+export const initializeFirstCharacter = async (): Promise<Character | null> => {
   const stored = localStorage.getItem(UNLOCKED_CHARACTERS_KEY);
-  if (!stored) {
-    // No characters unlocked yet - assign random first character
-    const randomIndex = Math.floor(Math.random() * BASE_CHARACTERS.length);
-    const firstCharacter = BASE_CHARACTERS[randomIndex];
+  if (stored && JSON.parse(stored).length > 0) {
+    // Already initialized
+    return getSelectedCharacter();
+  }
+  
+  // No characters unlocked yet - assign random first character
+  const randomIndex = Math.floor(Math.random() * BASE_CHARACTERS.length);
+  const firstCharacter = BASE_CHARACTERS[randomIndex];
 
-    // Unlock the first character
+  try {
+    // Sync with backend
+    const response = await api.post<{
+      success: boolean;
+      unlocked_characters: number[];
+      selected_character: number;
+      avatar_url: string;
+      leaf_dollars: number;
+      already_initialized?: boolean;
+    }>('/users/initialize_character/', {
+      character_id: firstCharacter.id,
+      icon_path: firstCharacter.iconPath
+    });
+    
+    if (response.already_initialized) {
+      // Backend already has characters, sync to localStorage
+      syncCharactersFromBackend(response.unlocked_characters, response.selected_character);
+      return getCharacterById(response.selected_character) || firstCharacter;
+    }
+    
+    // Update localStorage
+    localStorage.setItem(UNLOCKED_CHARACTERS_KEY, JSON.stringify(response.unlocked_characters));
+    localStorage.setItem(SELECTED_CHARACTER_KEY, String(response.selected_character));
+    
+    const profile = getUserProfile();
+    profile.avatar = response.avatar_url || firstCharacter.iconPath;
+    saveUserProfile(profile);
+    
+    return firstCharacter;
+  } catch (error) {
+    console.error('Failed to initialize character on backend:', error);
+    // Fallback to local-only initialization
     localStorage.setItem(UNLOCKED_CHARACTERS_KEY, JSON.stringify([firstCharacter.id]));
-
-    // Set as selected character and avatar
-    localStorage.setItem('selectedCharacter', String(firstCharacter.id));
-
+    localStorage.setItem(SELECTED_CHARACTER_KEY, String(firstCharacter.id));
+    
     const profile = getUserProfile();
     profile.avatar = firstCharacter.iconPath;
     saveUserProfile(profile);
+    
+    return firstCharacter;
+  }
+};
+
+// Purchase a character - syncs with backend
+export const purchaseCharacter = async (characterId: number): Promise<{
+  success: boolean;
+  remainingLeafDollars: number;
+  error?: string;
+}> => {
+  const character = getCharacterById(characterId);
+  if (!character) {
+    return { success: false, remainingLeafDollars: 0, error: 'Character not found' };
+  }
+  
+  try {
+    const response = await api.post<{
+      success: boolean;
+      unlocked_characters: number[];
+      remaining_leaf_dollars: number;
+      error?: string;
+    }>('/users/purchase_character/', {
+      character_id: characterId,
+      cost: character.cost,
+      icon_path: character.iconPath
+    });
+    
+    if (response.success) {
+      // Update localStorage
+      localStorage.setItem(UNLOCKED_CHARACTERS_KEY, JSON.stringify(response.unlocked_characters));
+      localStorage.setItem('leafDollars', String(response.remaining_leaf_dollars));
+    }
+    
+    return {
+      success: response.success,
+      remainingLeafDollars: response.remaining_leaf_dollars,
+      error: response.error
+    };
+  } catch (error) {
+    console.error('Failed to purchase character:', error);
+    return { success: false, remainingLeafDollars: 0, error: 'Failed to purchase character' };
+  }
+};
+
+// Select a character - syncs with backend
+export const selectCharacter = async (characterId: number): Promise<boolean> => {
+  const character = getCharacterById(characterId);
+  if (!character) return false;
+  
+  try {
+    const response = await api.post<{
+      success: boolean;
+      selected_character: number;
+      avatar_url: string;
+    }>('/users/select_character/', {
+      character_id: characterId,
+      icon_path: character.iconPath
+    });
+    
+    if (response.success) {
+      // Update localStorage
+      localStorage.setItem(SELECTED_CHARACTER_KEY, String(response.selected_character));
+      
+      const profile = getUserProfile();
+      profile.avatar = response.avatar_url || character.iconPath;
+      saveUserProfile(profile);
+    }
+    
+    return response.success;
+  } catch (error) {
+    console.error('Failed to select character:', error);
+    // Fallback to local update
+    localStorage.setItem(SELECTED_CHARACTER_KEY, String(characterId));
+    const profile = getUserProfile();
+    profile.avatar = character.iconPath;
+    saveUserProfile(profile);
+    return true;
   }
 };
 
@@ -116,14 +250,14 @@ export const getCharacterById = (id: number): Character | undefined => {
 
 // Get currently selected character
 export const getSelectedCharacter = (): Character => {
-  const selectedId = localStorage.getItem('selectedCharacter');
+  const selectedId = localStorage.getItem(SELECTED_CHARACTER_KEY);
   if (selectedId) {
     const character = getCharacterById(parseInt(selectedId));
     if (character) {
       return character;
     }
   }
-  // Fallback to first unlocked character
+  // Fallback to first unlocked character or first character
   const unlocked = getUnlockedCharacters();
   return unlocked.length > 0 ? unlocked[0] : BASE_CHARACTERS[0];
 };
@@ -147,13 +281,10 @@ export const getUserProfile = (): UserProfile => {
   if (stored) {
     return JSON.parse(stored);
   }
-  // Initialize first character if needed
-  initializeFirstCharacter();
-  const firstChar = getSelectedCharacter();
   // Default profile
   return {
     username: 'habitworrier',
-    avatar: firstChar.iconPath
+    avatar: BASE_CHARACTERS[0].iconPath
   };
 };
 
@@ -170,12 +301,12 @@ export const updateUsername = (username: string): void => {
 };
 
 // Update avatar only (now takes character ID instead of emoji)
-export const updateAvatar = (characterId: number): void => {
-  const character = getCharacterById(characterId);
-  if (character) {
-    const profile = getUserProfile();
-    profile.avatar = character.iconPath;
-    saveUserProfile(profile);
-    localStorage.setItem('selectedCharacter', String(characterId));
-  }
+export const updateAvatar = async (characterId: number): Promise<void> => {
+  await selectCharacter(characterId);
+};
+
+// Check if a character is unlocked
+export const isCharacterUnlocked = (characterId: number): boolean => {
+  const unlockedIds = getUnlockedCharacterIds();
+  return unlockedIds.includes(characterId);
 };

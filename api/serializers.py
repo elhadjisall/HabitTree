@@ -76,7 +76,8 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'username', 'email', 'display_name', 'avatar_url',
-            'leaf_dollars', 'is_active', 'created_at', 'updated_at', 'last_login'
+            'leaf_dollars', 'unlocked_characters', 'selected_character',
+            'is_active', 'created_at', 'updated_at', 'last_login'
         ]
         read_only_fields = ['id', 'leaf_dollars', 'created_at', 'updated_at', 'last_login']
 

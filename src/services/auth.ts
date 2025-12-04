@@ -1,7 +1,7 @@
 // Authentication Service
 
 import { api, setTokens, clearTokens } from './api';
-import { initializeFirstCharacter, getSelectedCharacter } from '../utils/charactersStorage';
+import { initializeFirstCharacter, syncCharactersFromBackend, getSelectedCharacter, saveUserProfile } from '../utils/charactersStorage';
 import { setLeafDollars } from '../utils/leafDollarsStorage';
 
 export interface LoginCredentials {
@@ -24,6 +24,8 @@ export interface User {
   display_name?: string;
   avatar_url?: string;
   leaf_dollars: number;
+  unlocked_characters?: number[];
+  selected_character?: number;
   created_at: string;
   last_login?: string;
 }
@@ -57,9 +59,26 @@ export const login = async (credentials: LoginCredentials): Promise<{ access: st
   // Get user info
   const user = await api.get<User>('/users/me/');
   
-  // Sync leaf dollars from backend to localStorage
+  // Sync ALL user data from backend to localStorage
+  // 1. Leaf dollars
   if (user.leaf_dollars !== undefined) {
     setLeafDollars(user.leaf_dollars);
+  }
+  
+  // 2. Unlocked characters and selected character
+  if (user.unlocked_characters && user.unlocked_characters.length > 0) {
+    syncCharactersFromBackend(user.unlocked_characters, user.selected_character || null);
+  } else {
+    // No characters yet - initialize first character
+    await initializeFirstCharacter();
+  }
+  
+  // 3. User profile
+  if (user.display_name || user.avatar_url) {
+    saveUserProfile({
+      username: user.display_name || user.username,
+      avatar: user.avatar_url || ''
+    });
   }
   
   return {
@@ -91,19 +110,19 @@ export const register = async (data: RegisterData): Promise<{ access: string; re
     throw new Error(errorMessage);
   }
 
-  // Initialize the first random character for the new user
-  initializeFirstCharacter();
-  
   // After registration, login automatically
   const loginResult = await login({ email: data.email, password: data.password });
   
-  // Set the profile picture to the randomly assigned character
-  try {
-    const selectedChar = getSelectedCharacter();
-    await api.put('/users/me/', { avatar_url: selectedChar.iconPath });
-  } catch (avatarError) {
-    console.error('Failed to set initial avatar:', avatarError);
-    // Continue anyway, avatar can be set later
+  // Initialize the first random character for the new user (syncs with backend)
+  const selectedChar = await initializeFirstCharacter();
+  
+  // Update avatar on backend if character was initialized
+  if (selectedChar) {
+    try {
+      await api.put('/users/me/', { avatar_url: selectedChar.iconPath });
+    } catch (avatarError) {
+      console.error('Failed to set initial avatar:', avatarError);
+    }
   }
   
   return loginResult;
@@ -154,4 +173,3 @@ export const isAuthenticated = (): boolean => {
 export const updateUserProfile = async (data: Partial<User>): Promise<User> => {
   return await api.put<User>('/users/me/', data);
 };
-

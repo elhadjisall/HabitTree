@@ -5,11 +5,11 @@ import { useHabits } from '../hooks/useHabits';
 import { getHabitLogs } from '../utils/habitLogsStore';
 import {
   BASE_CHARACTERS,
-  updateAvatar,
+  selectCharacter,
+  purchaseCharacter,
+  getUnlockedCharacterIds,
 } from '../utils/charactersStorage';
 import { useRive } from '@rive-app/react-canvas';
-
-const UNLOCKED_CHARACTERS_KEY = 'unlockedCharacters';
 
 // Characters with Rive animations available
 const CHARACTERS_WITH_RIVE = ['Ban']; // Only Ban has Rive animation for now
@@ -70,20 +70,6 @@ const getTreeLevel = (progress: number): number => {
   return 9;
 };
 
-// Load unlocked characters from localStorage (unused but kept for potential future use)
-// const loadUnlockedCharacters = (): Character[] => {
-//   return getUnlockedCharacters();
-// };
-
-// Save unlocked characters to localStorage
-const saveUnlockedCharacters = (characterId: number): void => {
-  const stored = localStorage.getItem(UNLOCKED_CHARACTERS_KEY);
-  const unlockedIds = stored ? JSON.parse(stored) as number[] : [];
-  if (!unlockedIds.includes(characterId)) {
-    unlockedIds.push(characterId);
-    localStorage.setItem(UNLOCKED_CHARACTERS_KEY, JSON.stringify(unlockedIds));
-  }
-};
 
 const TreeCharacter: React.FC = () => {
   const habits = useHabits();
@@ -116,10 +102,10 @@ const TreeCharacter: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Persist selected character to localStorage
-  const handleCharacterChange = (characterId: number) => {
+  // Persist selected character to backend and localStorage
+  const handleCharacterChange = async (characterId: number) => {
     setSelectedCharacter(characterId);
-    updateAvatar(characterId);
+    await selectCharacter(characterId);
   };
 
   // Calculate progress for selected habit
@@ -138,10 +124,7 @@ const TreeCharacter: React.FC = () => {
   const currentProgress = selectedHabit ? calculateProgress(selectedHabit) : 0;
 
   // Get all characters with unlocked status
-  const unlockedIds = (() => {
-    const stored = localStorage.getItem(UNLOCKED_CHARACTERS_KEY);
-    return stored ? JSON.parse(stored) as number[] : [];
-  })();
+  const unlockedIds = getUnlockedCharacterIds();
 
   const allCharacters = BASE_CHARACTERS.map(char => ({
     ...char,
@@ -151,15 +134,20 @@ const TreeCharacter: React.FC = () => {
   const currentCharacter = allCharacters.find(c => c.id === selectedCharacter);
   const unlockedCharacters = allCharacters.filter(c => c.unlocked);
 
-  const handlePurchaseCharacter = (characterId: number, cost: number): void => {
+  const handlePurchaseCharacter = async (characterId: number, cost: number): Promise<void> => {
     if (leafDollarsState >= cost) {
-      const newBalance = leafDollarsState - cost;
-      setLeafDollars(newBalance);
-      setLeafDollarsState(newBalance);
-      saveUnlockedCharacters(characterId); // Persist to localStorage
-      alert('Character unlocked! 🎉');
-      // Force re-render by changing state
-      window.location.reload();
+      // Purchase character via backend API
+      const result = await purchaseCharacter(characterId);
+      
+      if (result.success) {
+        setLeafDollarsState(result.remainingLeafDollars);
+        setLeafDollars(result.remainingLeafDollars);
+        alert('Character unlocked! 🎉');
+        // Force re-render to show updated characters
+        window.location.reload();
+      } else {
+        alert(result.error || 'Failed to purchase character');
+      }
     } else {
       alert('Not enough Leaf Dollars! Keep completing your quests! 🍃');
     }

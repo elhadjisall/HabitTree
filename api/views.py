@@ -145,6 +145,119 @@ class UserViewSet(viewsets.ModelViewSet):
             'public_habits': habits_data,
             'characters': characters,
         })
+    
+    @action(detail=False, methods=['post'])
+    def purchase_character(self, request):
+        """Purchase a character with leaf dollars"""
+        user = request.user
+        character_id = request.data.get('character_id')
+        character_cost = request.data.get('cost', 50)  # Default cost is 50
+        character_icon = request.data.get('icon_path', '')
+        
+        if not character_id:
+            return Response(
+                {'error': 'character_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Check if already unlocked
+        unlocked = user.unlocked_characters or []
+        if character_id in unlocked:
+            return Response(
+                {'error': 'Character already unlocked'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Check if user has enough leaf dollars
+        if user.leaf_dollars < character_cost:
+            return Response(
+                {'error': f'Not enough leaf dollars. Need {character_cost}, have {user.leaf_dollars}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Purchase the character
+        with transaction.atomic():
+            user.leaf_dollars -= character_cost
+            unlocked.append(character_id)
+            user.unlocked_characters = unlocked
+            user.save()
+        
+        return Response({
+            'success': True,
+            'unlocked_characters': user.unlocked_characters,
+            'remaining_leaf_dollars': user.leaf_dollars
+        })
+    
+    @action(detail=False, methods=['post'])
+    def select_character(self, request):
+        """Select a character as the active avatar"""
+        user = request.user
+        character_id = request.data.get('character_id')
+        icon_path = request.data.get('icon_path', '')
+        
+        if not character_id:
+            return Response(
+                {'error': 'character_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Check if character is unlocked
+        unlocked = user.unlocked_characters or []
+        if character_id not in unlocked:
+            return Response(
+                {'error': 'Character not unlocked'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Update selected character
+        user.selected_character = character_id
+        if icon_path:
+            user.avatar_url = icon_path
+        user.save()
+        
+        return Response({
+            'success': True,
+            'selected_character': user.selected_character,
+            'avatar_url': user.avatar_url
+        })
+    
+    @action(detail=False, methods=['post'])
+    def initialize_character(self, request):
+        """Initialize first character for new users (called on first login)"""
+        user = request.user
+        character_id = request.data.get('character_id')
+        icon_path = request.data.get('icon_path', '')
+        
+        if not character_id:
+            return Response(
+                {'error': 'character_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Only initialize if no characters are unlocked yet
+        if user.unlocked_characters and len(user.unlocked_characters) > 0:
+            return Response({
+                'success': True,
+                'already_initialized': True,
+                'unlocked_characters': user.unlocked_characters,
+                'selected_character': user.selected_character,
+                'leaf_dollars': user.leaf_dollars
+            })
+        
+        # Initialize with the first character (free)
+        user.unlocked_characters = [character_id]
+        user.selected_character = character_id
+        if icon_path:
+            user.avatar_url = icon_path
+        user.save()
+        
+        return Response({
+            'success': True,
+            'unlocked_characters': user.unlocked_characters,
+            'selected_character': user.selected_character,
+            'avatar_url': user.avatar_url,
+            'leaf_dollars': user.leaf_dollars
+        })
 
 
 class HabitViewSet(viewsets.ModelViewSet):

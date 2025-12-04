@@ -8,8 +8,10 @@ class User(AbstractUser):
     """Custom User model extending Django's AbstractUser"""
     email = models.EmailField(unique=True)
     display_name = models.CharField(max_length=100, blank=True, null=True)
-    avatar_url = models.CharField(max_length=500, blank=True, null=True)  # Changed from URLField to CharField to accept relative paths
+    avatar_url = models.CharField(max_length=500, blank=True, null=True)  # Path to selected character icon
     leaf_dollars = models.IntegerField(default=50)  # New users start with 50 leaf dollars
+    unlocked_characters = models.JSONField(default=list, blank=True)  # List of unlocked character IDs
+    selected_character = models.IntegerField(default=1, null=True)  # Currently selected character ID
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
