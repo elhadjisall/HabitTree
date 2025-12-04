@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './MainMenu.css';
-import { getLeafDollars, setLeafDollars, addLeafDollars, subtractLeafDollars } from '../utils/leafDollarsStorage';
+import { getLeafDollars, setLeafDollars, subtractLeafDollars } from '../utils/leafDollarsStorage';
 import { updateHabitLog, getTodayDateString, formatDate, getHabitLog, getHabitLogs, setHabitLogs } from '../utils/habitLogsStore';
 import { useHabits } from '../hooks/useHabits';
 import { deleteHabit, updateHabit, completeHabit, getHabits, type Habit } from '../utils/habitsStore';
