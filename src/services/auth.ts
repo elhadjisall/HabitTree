@@ -1,7 +1,7 @@
 // Authentication Service
 
 import { api, setTokens, clearTokens } from './api';
-import { initializeFirstCharacter, syncCharactersFromBackend, getSelectedCharacter, saveUserProfile } from '../utils/charactersStorage';
+import { initializeFirstCharacter, syncCharactersFromBackend, saveUserProfile } from '../utils/charactersStorage';
 import { setLeafDollars } from '../utils/leafDollarsStorage';
 
 export interface LoginCredentials {
