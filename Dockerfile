@@ -22,10 +22,16 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY manage.py .
 COPY habittree/ habittree/
 COPY api/ api/
+COPY start.sh .
+
+# Make start script executable
+RUN chmod +x start.sh
+
+# Collect static files
+RUN python manage.py collectstatic --noinput || true
 
 # Expose port
 EXPOSE 8000
 
-# Run migrations and start server
-CMD python manage.py migrate && gunicorn habittree.wsgi:application --bind 0.0.0.0:${PORT:-8000}
-
+# Use the startup script
+CMD ["./start.sh"]
