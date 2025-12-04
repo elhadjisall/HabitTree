@@ -59,9 +59,9 @@ const apiRequest = async (
 ): Promise<Response> => {
   const token = getToken();
   
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...options.headers,
+    ...(options.headers as Record<string, string> || {}),
   };
 
   if (token) {
@@ -77,10 +77,13 @@ const apiRequest = async (
   if (response.status === 401 && token) {
     const newToken = await refreshAccessToken();
     if (newToken) {
-      headers['Authorization'] = `Bearer ${newToken}`;
+      const newHeaders: Record<string, string> = {
+        ...headers,
+        'Authorization': `Bearer ${newToken}`,
+      };
       response = await fetch(`${API_BASE_URL}${endpoint}`, {
         ...options,
-        headers,
+        headers: newHeaders,
       });
     } else {
       // Redirect to login if refresh fails

@@ -9,7 +9,7 @@ import { deleteHabit, updateHabit, completeHabit, getHabits, type Habit } from '
 import { hasShownCompletionPopup, markQuestCompletionShown } from '../utils/completedQuestsStorage';
 import { getSelectedCharacter, getRandomDialogue, initializeFirstCharacter } from '../utils/charactersStorage';
 import { api } from '../services/api';
-import { getCurrentUser } from '../services/auth';
+// import { getCurrentUser } from '../services/auth'; // Unused for now
 import ConfirmModal from '../components/ConfirmModal';
 import QuestCompletionCongrats from '../components/QuestCompletionCongrats';
 
@@ -189,7 +189,7 @@ const MainMenu: React.FC = () => {
     try {
       if (newCompleted) {
         // Mark as complete via backend API
-        const response = await api.post(`/habits/${habit.id}/complete/`, {});
+        const response = await api.post<{total_leaf_dollars?: number; leaf_dollars_earned?: number}>(`/habits/${habit.id}/complete/`, {});
         
         // Update leaf dollars from backend response
         if (response.total_leaf_dollars !== undefined) {
@@ -206,7 +206,7 @@ const MainMenu: React.FC = () => {
         updateHabitLog(habit.id, dateString, true);
         
         // Refresh habits to get updated streak
-        const updatedHabits = await getHabits();
+        await getHabits();
         window.dispatchEvent(new Event('habitsChanged'));
       } else {
         // Mark as incomplete via backend API
@@ -254,7 +254,7 @@ const MainMenu: React.FC = () => {
     try {
       if (isNowCompleted && !wasCompleted) {
         // Mark as complete via backend API when target is reached
-        const response = await api.post(`/habits/${habit.id}/complete/`, {
+        const response = await api.post<{total_leaf_dollars?: number; leaf_dollars_earned?: number}>(`/habits/${habit.id}/complete/`, {
           amount_done: newValue
         });
         
@@ -314,7 +314,7 @@ const MainMenu: React.FC = () => {
         const dateString = formatDate(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
 
         // Revive via backend API
-        const response = await api.post(`/habits/${habit.id}/revive/`, {
+        const response = await api.post<{remaining_leaf_dollars?: number}>(`/habits/${habit.id}/revive/`, {
           date: dateString
         });
 

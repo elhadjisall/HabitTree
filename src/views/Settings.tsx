@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './Settings.css';
 import { getDarkMode, setDarkMode } from '../utils/darkModeStorage';
-import { getUserProfile, updateUsername, updateAvatar, getUnlockedCharacters, getCharacterById, type Character } from '../utils/charactersStorage';
+import { getUserProfile, updateUsername, updateAvatar, getUnlockedCharacters, getCharacterById } from '../utils/charactersStorage';
 import { getCompanionSlots, setCompanionSlots, getMaxCompanionSlots } from '../utils/companionSlotsStorage';
 import { useHabits } from '../hooks/useHabits';
 import { getCurrentUser, updateUserProfile, logout } from '../services/auth';
@@ -36,7 +36,7 @@ const Settings: React.FC = () => {
     email: 'user@example.com',
     profilePicture: userProfile.avatar,
   });
-  const [loading, setLoading] = useState<boolean>(true);
+  const [, setLoading] = useState<boolean>(true);
 
   // Fetch user data from backend on mount
   useEffect(() => {

@@ -18,11 +18,7 @@ const LandingPage: React.FC = () => {
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
 
-  const handleGetStarted = () => {
-    setShowAuthModal(true);
-    setIsLogin(false); 
-    setError('');
-  };
+  // Removed unused handleGetStarted - using openModal instead
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,7 +51,7 @@ const LandingPage: React.FC = () => {
           email: email.trim(),
           username: username.trim(),
           password: password,
-          password2: password2
+          password2: password2,
         };
         await register(registerData);
         // Navigate to app on success (register also logs in)

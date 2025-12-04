@@ -5,10 +5,7 @@ import { useHabits } from '../hooks/useHabits';
 import { getHabitLogs } from '../utils/habitLogsStore';
 import {
   BASE_CHARACTERS,
-  getUnlockedCharacters,
-  getSelectedCharacter,
   updateAvatar,
-  type Character
 } from '../utils/charactersStorage';
 import { useRive } from '@rive-app/react-canvas';
 
@@ -20,7 +17,7 @@ interface RiveCharacterProps {
   characterName: string;
 }
 
-const RiveCharacter: React.FC<RiveCharacterProps> = ({ src, characterName }) => {
+const RiveCharacter: React.FC<RiveCharacterProps> = ({ src }) => {
   const { RiveComponent } = useRive({
     src: src,
     autoplay: true,
@@ -57,10 +54,10 @@ const getTreeLevel = (progress: number): number => {
   return 9;
 };
 
-// Load unlocked characters from localStorage
-const loadUnlockedCharacters = (): Character[] => {
-  return getUnlockedCharacters();
-};
+// Load unlocked characters from localStorage (unused but kept for potential future use)
+// const loadUnlockedCharacters = (): Character[] => {
+//   return getUnlockedCharacters();
+// };
 
 // Save unlocked characters to localStorage
 const saveUnlockedCharacters = (characterId: number): void => {

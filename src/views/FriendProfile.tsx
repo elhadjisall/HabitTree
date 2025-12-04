@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import './FriendProfile.css';
-import { getFriendProfileByUsername, type FriendProfile } from '../services/friends';
+import { getFriendProfileByUsername, type FriendProfile as FriendProfileType } from '../services/friends';
 
 // Helper to get avatar emoji from avatar_url
 const getAvatarEmoji = (avatarUrl?: string): string => {
@@ -13,11 +13,11 @@ const getAvatarEmoji = (avatarUrl?: string): string => {
 const FriendProfile: React.FC = () => {
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<FriendProfile | null>(null);
+  const [profile, setProfile] = useState<FriendProfileType | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
-  const [showCurrentQuests, setShowCurrentQuests] = useState(false);
-  const [showQuestHistory, setShowQuestHistory] = useState(false);
+  const [_showCurrentQuests, _setShowCurrentQuests] = useState(false);
+  const [_showQuestHistory, _setShowQuestHistory] = useState(false);
 
   useEffect(() => {
     const loadProfile = async () => {
