@@ -79,14 +79,14 @@
 /* Create button (center) special styling */
 .nav-item-create {
   position: relative;
-  bottom: 0;
+  top: 0;
   background: linear-gradient(135deg, var(--accent-primary), var(--accent-success));
   color: white;
-  width: 50px;
-  height: 50px;
-  min-width: 50px;
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
   border-radius: 50%;
-  box-shadow: 0 4px 15px rgba(106, 176, 76, 0.4);
+  box-shadow: 0 2px 10px rgba(106, 176, 76, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -135,10 +135,10 @@
   }
 
   .nav-item-create {
-    width: 54px;
-    height: 54px;
-    min-width: 54px;
-    bottom: 0;
+    width: 50px;
+    height: 50px;
+    min-width: 50px;
+    top: 0;
   }
 }
 
@@ -167,10 +167,10 @@
   }
 
   .nav-item-create {
-    width: 56px;
-    height: 56px;
-    min-width: 56px;
-    bottom: 0;
+    width: 52px;
+    height: 52px;
+    min-width: 52px;
+    top: 0;
   }
 
   .nav-icon-create {

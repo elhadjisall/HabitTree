@@ -1,6 +1,7 @@
 // Authentication Service
 
 import { api, setTokens, clearTokens } from './api';
+import { initializeFirstCharacter, getSelectedCharacter } from '../utils/charactersStorage';
 
 export interface LoginCredentials {
   email: string;
@@ -84,8 +85,22 @@ export const register = async (data: RegisterData): Promise<{ access: string; re
     throw new Error(errorMessage);
   }
 
+  // Initialize the first random character for the new user
+  initializeFirstCharacter();
+  
   // After registration, login automatically
-  return login({ email: data.email, password: data.password });
+  const loginResult = await login({ email: data.email, password: data.password });
+  
+  // Set the profile picture to the randomly assigned character
+  try {
+    const selectedChar = getSelectedCharacter();
+    await api.put('/users/me/', { avatar_url: selectedChar.iconPath });
+  } catch (avatarError) {
+    console.error('Failed to set initial avatar:', avatarError);
+    // Continue anyway, avatar can be set later
+  }
+  
+  return loginResult;
 };
 
 // Logout
