@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './MainMenu.css';
-import { getLeafDollars, addLeafDollars, subtractLeafDollars } from '../utils/leafDollarsStorage';
+import { getLeafDollars, setLeafDollars, addLeafDollars, subtractLeafDollars } from '../utils/leafDollarsStorage';
 import { updateHabitLog, getTodayDateString, formatDate, getHabitLog, getHabitLogs, setHabitLogs } from '../utils/habitLogsStore';
 import { useHabits } from '../hooks/useHabits';
 import { deleteHabit, updateHabit, completeHabit, getHabits, type Habit } from '../utils/habitsStore';
@@ -188,18 +188,13 @@ const MainMenu: React.FC = () => {
     try {
       if (newCompleted) {
         // Mark as complete via backend API
-        const response = await api.post<{total_leaf_dollars?: number; leaf_dollars_earned?: number}>(`/habits/${habit.id}/complete/`, {});
+        const response = await api.post<{total_leaf_dollars?: number; leaf_dollars_earned?: number; new_streak?: number}>(`/habits/${habit.id}/complete/`, {});
         
-        // Update leaf dollars - ALWAYS add earned amount to current local balance
-        if (response.leaf_dollars_earned !== undefined && response.leaf_dollars_earned > 0) {
-          // Add earned amount to current local balance
-          const newBalance = addLeafDollars(response.leaf_dollars_earned);
-          setLeafDollarsState(newBalance);
-        } else {
-          // Default reward of 5 leaf dollars per completion if backend doesn't specify
-          const defaultReward = 5;
-          const newBalance = addLeafDollars(defaultReward);
-          setLeafDollarsState(newBalance);
+        // Update leaf dollars from backend's total (this is the source of truth)
+        if (response.total_leaf_dollars !== undefined) {
+          // Use the backend's total - this ensures localStorage matches database
+          setLeafDollars(response.total_leaf_dollars);
+          setLeafDollarsState(response.total_leaf_dollars);
         }
 
         // Update local cache
@@ -255,20 +250,15 @@ const MainMenu: React.FC = () => {
     try {
       if (isNowCompleted && !wasCompleted) {
         // Mark as complete via backend API when target is reached
-        const response = await api.post<{total_leaf_dollars?: number; leaf_dollars_earned?: number}>(`/habits/${habit.id}/complete/`, {
+        const response = await api.post<{total_leaf_dollars?: number; leaf_dollars_earned?: number; new_streak?: number}>(`/habits/${habit.id}/complete/`, {
           amount_done: newValue
         });
         
-        // Update leaf dollars - ALWAYS add earned amount to current local balance
-        if (response.leaf_dollars_earned !== undefined && response.leaf_dollars_earned > 0) {
-          // Add earned amount to current local balance
-          const newBalance = addLeafDollars(response.leaf_dollars_earned);
-          setLeafDollarsState(newBalance);
-        } else {
-          // Default reward of 5 leaf dollars per completion if backend doesn't specify
-          const defaultReward = 5;
-          const newBalance = addLeafDollars(defaultReward);
-          setLeafDollarsState(newBalance);
+        // Update leaf dollars from backend's total (this is the source of truth)
+        if (response.total_leaf_dollars !== undefined) {
+          // Use the backend's total - this ensures localStorage matches database
+          setLeafDollars(response.total_leaf_dollars);
+          setLeafDollarsState(response.total_leaf_dollars);
         }
 
         // Refresh habits to get updated streak
