@@ -4,7 +4,6 @@ import './MainMenu.css';
 import { getLeafDollars, addLeafDollars, subtractLeafDollars } from '../utils/leafDollarsStorage';
 import { updateHabitLog, getTodayDateString, formatDate, getHabitLog, getHabitLogs, setHabitLogs } from '../utils/habitLogsStore';
 import { useHabits } from '../hooks/useHabits';
-import { calculateStreak } from '../utils/streakCalculation';
 import { deleteHabit, updateHabit, completeHabit, getHabits, type Habit } from '../utils/habitsStore';
 import { hasShownCompletionPopup, markQuestCompletionShown } from '../utils/completedQuestsStorage';
 import { getSelectedCharacter, getRandomDialogue, initializeFirstCharacter } from '../utils/charactersStorage';
@@ -571,7 +570,8 @@ const MainMenu: React.FC = () => {
 
         {habits.map(habit => {
           const state = habitStates[habit.id] || { completed: false, currentValue: 0 };
-          const streak = calculateStreak(habit); // Calculate streak from logs
+          // Use backend streak value (persists after logout), fallback to local calculation
+          const streak = habit.streak || 0;
 
           return (
             <div
@@ -693,7 +693,7 @@ const MainMenu: React.FC = () => {
 
               <div className="detail-row">
                 <span className="detail-label">Current Streak:</span>
-                <span className="detail-value">🔥 {calculateStreak(selectedHabitForDetails)}</span>
+                <span className="detail-value">🔥 {selectedHabitForDetails.streak || 0}</span>
               </div>
 
               {selectedHabitForDetails.trackingType === 'variable_amount' && (
