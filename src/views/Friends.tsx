@@ -13,14 +13,38 @@ import {
   type FriendRequest
 } from '../services/friends';
 
-// Helper to get avatar emoji from avatar_url
-const getAvatarEmoji = (avatarUrl?: string): string => {
-  if (!avatarUrl) return '';
-  // Extract emoji from URL or return default
-  // If avatar_url is an emoji string, return it
-  if (avatarUrl.length <= 2) return avatarUrl;
-  // If it's a path, try to extract emoji or return default
-  return avatarUrl.includes('emoji') ? '' : avatarUrl;
+// Default character image for users without avatar
+const DEFAULT_AVATAR = '/assets/characters/mape-icon.jpeg';
+
+// Helper to render avatar - handles both image paths and emojis
+const renderAvatar = (avatarUrl?: string): React.ReactNode => {
+  // If no avatar, show default character
+  if (!avatarUrl) {
+    return <img src={DEFAULT_AVATAR} alt="Avatar" className="avatar-img" />;
+  }
+  
+  // If it's an image path (starts with / or http)
+  if (avatarUrl.startsWith('/') || avatarUrl.startsWith('http')) {
+    return (
+      <img 
+        src={avatarUrl} 
+        alt="Avatar" 
+        className="avatar-img"
+        onError={(e) => {
+          // Fallback to default if image fails to load
+          (e.target as HTMLImageElement).src = DEFAULT_AVATAR;
+        }}
+      />
+    );
+  }
+  
+  // If it's an emoji (short string)
+  if (avatarUrl.length <= 4) {
+    return <span className="avatar-emoji">{avatarUrl}</span>;
+  }
+  
+  // Default fallback
+  return <img src={DEFAULT_AVATAR} alt="Avatar" className="avatar-img" />;
 };
 
 const Friends: React.FC = () => {
@@ -230,7 +254,7 @@ const Friends: React.FC = () => {
 
                 return (
                   <div key={user.id} className="friend-capsule search-result">
-                    <div className="friend-avatar">{getAvatarEmoji(user.avatar_url)}</div>
+                    <div className="friend-avatar">{renderAvatar(user.avatar_url)}</div>
                     <div className="friend-info">
                       <span className="friend-username">{user.display_name || user.username}</span>
                       {user.email && <span className="friend-email">{user.email}</span>}
@@ -272,7 +296,7 @@ const Friends: React.FC = () => {
               const friend = request.friend;
               return (
                 <div key={request.id} className="friend-capsule request-capsule">
-                  <div className="friend-avatar">{getAvatarEmoji(friend.avatar_url)}</div>
+                  <div className="friend-avatar">{renderAvatar(friend.avatar_url)}</div>
                   <div className="friend-info">
                     <span className="friend-username">{friend.display_name || friend.username}</span>
                   </div>
@@ -299,7 +323,7 @@ const Friends: React.FC = () => {
               const user = request.user;
               return (
                 <div key={request.id} className="friend-capsule request-capsule">
-                  <div className="friend-avatar">{getAvatarEmoji(user.avatar_url)}</div>
+                  <div className="friend-avatar">{renderAvatar(user.avatar_url)}</div>
                   <div className="friend-info">
                     <span className="friend-username">{user.display_name || user.username}</span>
                   </div>
@@ -352,7 +376,7 @@ const Friends: React.FC = () => {
                 onTouchStart={() => handleLongPressStart(friend)}
                 onTouchEnd={handleLongPressEnd}
               >
-                <div className="friend-avatar">{getAvatarEmoji(friend.avatar_url)}</div>
+                <div className="friend-avatar">{renderAvatar(friend.avatar_url)}</div>
                 <div className="friend-info">
                   <span className="friend-username">{friend.display_name || friend.username}</span>
                 </div>
