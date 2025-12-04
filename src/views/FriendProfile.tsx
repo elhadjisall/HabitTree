@@ -3,11 +3,31 @@ import { useParams, useNavigate } from 'react-router-dom';
 import './FriendProfile.css';
 import { getFriendProfileByUsername, type FriendProfile as FriendProfileType } from '../services/friends';
 
-// Helper to get avatar emoji from avatar_url
-const getAvatarEmoji = (avatarUrl?: string): string => {
-  if (!avatarUrl) return '';
-  if (avatarUrl.length <= 2) return avatarUrl;
-  return avatarUrl.includes('emoji') ? '' : avatarUrl;
+// Helper to render avatar - handles both image paths and emojis
+const renderAvatar = (avatarUrl?: string, size: 'small' | 'large' = 'large'): React.ReactNode => {
+  if (!avatarUrl) return <span className="default-avatar">🌱</span>;
+  
+  // Check if it's an image path
+  if (avatarUrl.startsWith('/') || avatarUrl.startsWith('http')) {
+    return (
+      <img 
+        src={avatarUrl} 
+        alt="Avatar" 
+        className={`avatar-image ${size}`}
+        style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: size === 'large' ? '50%' : '8px' }}
+        onError={(e) => {
+          const target = e.target as HTMLImageElement;
+          target.style.display = 'none';
+          if (target.parentElement) {
+            target.parentElement.innerHTML = '<span class="default-avatar">🌱</span>';
+          }
+        }}
+      />
+    );
+  }
+  
+  // It's an emoji or short text
+  return <span className="avatar-emoji">{avatarUrl}</span>;
 };
 
 const FriendProfile: React.FC = () => {
@@ -90,7 +110,7 @@ const FriendProfile: React.FC = () => {
         {/* Profile Top Section */}
         <div className="profile-top">
           <div className="profile-avatar-large">
-            {getAvatarEmoji(user.avatar_url)}
+            {renderAvatar(user.avatar_url, 'large')}
           </div>
           <h2 className="profile-username">{user.display_name || user.username}</h2>
         </div>
@@ -99,13 +119,13 @@ const FriendProfile: React.FC = () => {
         <div className="profile-section-compact">
           <div className="avatar-and-characters">
             <div className="profile-avatar-large">
-              {getAvatarEmoji(user.avatar_url)}
+              {renderAvatar(user.avatar_url, 'large')}
             </div>
             <div className="characters-horizontal">
               {profile.characters && profile.characters.length > 0 ? (
                 profile.characters.map((char, index) => (
                   <div key={index} className="character-box-small">
-                    {getAvatarEmoji(char)}
+                    {renderAvatar(char, 'small')}
                   </div>
                 ))
               ) : (

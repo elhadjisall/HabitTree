@@ -3,6 +3,35 @@ import { useParams, useNavigate } from 'react-router-dom';
 import './TreeCharacter.css';
 import './FriendProfile.css';
 import { getFriendProfileByUsername, type FriendProfile } from '../services/friends';
+import { useRive } from '@rive-app/react-canvas';
+
+// Get tree level based on progress (0-10%, 11-20%, ..., 91-100%)
+const getTreeLevel = (progress: number): number => {
+  if (progress <= 10) return 0;
+  if (progress <= 20) return 1;
+  if (progress <= 30) return 2;
+  if (progress <= 40) return 3;
+  if (progress <= 50) return 4;
+  if (progress <= 60) return 5;
+  if (progress <= 70) return 6;
+  if (progress <= 80) return 7;
+  if (progress <= 90) return 8;
+  return 9;
+};
+
+// Rive Tree Animation Component
+interface RiveTreeProps {
+  level: number;
+}
+
+const RiveTree: React.FC<RiveTreeProps> = ({ level }) => {
+  const { RiveComponent } = useRive({
+    src: `/assets/trees/tree-level-${level}.riv`,
+    autoplay: true,
+  });
+
+  return <RiveComponent className="tree-rive" />;
+};
 
 const FriendTree: React.FC = () => {
   const { username } = useParams<{ username: string }>();
@@ -138,14 +167,16 @@ const FriendTree: React.FC = () => {
       <div className="visualization-area">
         <div className="forest-background">
           {/* Sky/trees at top, soil at bottom */}
-          <div className="forest-sky"></div>
+          <div className="forest-sky">
+            <div className="sun"></div>
+          </div>
           <div className="forest-soil">
             {/* Horizontal layout: Tree and Character side by side */}
             <div className="horizontal-scene">
               {/* Tree on the left */}
               <div className="tree-container">
                 <div className="tree-placeholder">
-                  <div className="tree-emoji">🌳</div>
+                  <RiveTree key={getTreeLevel(currentProgress)} level={getTreeLevel(currentProgress)} />
                   <div className="tree-growth-bar">
                     <div
                       className="tree-growth-fill"
@@ -159,7 +190,16 @@ const FriendTree: React.FC = () => {
               {/* Character on the right */}
               <div className="character-container">
                 <div className="character-placeholder">
-                  <div className="character-emoji">{mainAvatar}</div>
+                  {mainAvatar && (mainAvatar.startsWith('/') || mainAvatar.startsWith('http')) ? (
+                    <img 
+                      src={mainAvatar} 
+                      alt={user.display_name || user.username} 
+                      className="friend-character-image"
+                      style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                    />
+                  ) : (
+                    <div className="character-emoji">{mainAvatar || '🌱'}</div>
+                  )}
                   <p className="character-name">{user.display_name || user.username}</p>
                 </div>
               </div>

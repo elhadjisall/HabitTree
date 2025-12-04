@@ -191,13 +191,15 @@ const MainMenu: React.FC = () => {
         // Mark as complete via backend API
         const response = await api.post<{total_leaf_dollars?: number; leaf_dollars_earned?: number}>(`/habits/${habit.id}/complete/`, {});
         
-        // Update leaf dollars from backend response
-        if (response.total_leaf_dollars !== undefined) {
-          setLeafDollarsState(response.total_leaf_dollars);
-          // Also update localStorage for consistency
-          localStorage.setItem('leafDollars', String(response.total_leaf_dollars));
-        } else if (response.leaf_dollars_earned) {
+        // Update leaf dollars - ALWAYS add earned amount to current local balance
+        if (response.leaf_dollars_earned !== undefined && response.leaf_dollars_earned > 0) {
+          // Add earned amount to current local balance
           const newBalance = addLeafDollars(response.leaf_dollars_earned);
+          setLeafDollarsState(newBalance);
+        } else {
+          // Default reward of 5 leaf dollars per completion if backend doesn't specify
+          const defaultReward = 5;
+          const newBalance = addLeafDollars(defaultReward);
           setLeafDollarsState(newBalance);
         }
 
@@ -258,12 +260,15 @@ const MainMenu: React.FC = () => {
           amount_done: newValue
         });
         
-        // Update leaf dollars from backend response
-        if (response.total_leaf_dollars !== undefined) {
-          setLeafDollarsState(response.total_leaf_dollars);
-          localStorage.setItem('leafDollars', String(response.total_leaf_dollars));
-        } else if (response.leaf_dollars_earned) {
+        // Update leaf dollars - ALWAYS add earned amount to current local balance
+        if (response.leaf_dollars_earned !== undefined && response.leaf_dollars_earned > 0) {
+          // Add earned amount to current local balance
           const newBalance = addLeafDollars(response.leaf_dollars_earned);
+          setLeafDollarsState(newBalance);
+        } else {
+          // Default reward of 5 leaf dollars per completion if backend doesn't specify
+          const defaultReward = 5;
+          const newBalance = addLeafDollars(defaultReward);
           setLeafDollarsState(newBalance);
         }
 

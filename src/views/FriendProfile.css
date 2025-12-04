@@ -161,6 +161,32 @@
   font-size: 3rem;
   flex-shrink: 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-image.large {
+  width: 100%;
+  height: 100%;
+}
+
+.avatar-image.small {
+  width: 100%;
+  height: 100%;
+}
+
+.avatar-emoji {
+  font-size: inherit;
+}
+
+.default-avatar {
+  font-size: 2rem;
+  opacity: 0.5;
 }
 
 .characters-horizontal {
@@ -181,6 +207,13 @@
   justify-content: center;
   font-size: 1.8rem;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.character-box-small .avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .profile-section {
