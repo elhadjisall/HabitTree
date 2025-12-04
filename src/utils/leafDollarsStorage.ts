@@ -1,20 +1,15 @@
 // Global Leaf Dollar storage
 const LEAF_DOLLARS_KEY = 'leafDollars';
-const DEFAULT_LEAF_DOLLARS = 1250;
-const TEMP_DEV_LEAF_DOLLARS = 10000; // TEMPORARY: For development/testing only
+const DEFAULT_LEAF_DOLLARS = 50; // New users start with 50 leaf dollars
 
 export const getLeafDollars = (): number => {
   const stored = localStorage.getItem(LEAF_DOLLARS_KEY);
-  const amount = stored ? parseInt(stored) : DEFAULT_LEAF_DOLLARS;
-
-  // TEMPORARY: Override with 10,000 for testing
-  // TODO: Remove this before production
-  if (amount < TEMP_DEV_LEAF_DOLLARS) {
-    setLeafDollars(TEMP_DEV_LEAF_DOLLARS);
-    return TEMP_DEV_LEAF_DOLLARS;
+  if (stored !== null) {
+    return parseInt(stored);
   }
-
-  return amount;
+  // First time - set default and return
+  setLeafDollars(DEFAULT_LEAF_DOLLARS);
+  return DEFAULT_LEAF_DOLLARS;
 };
 
 export const setLeafDollars = (amount: number): void => {
