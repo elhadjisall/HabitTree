@@ -257,7 +257,6 @@ const Friends: React.FC = () => {
                     <div className="friend-avatar">{renderAvatar(user.avatar_url)}</div>
                     <div className="friend-info">
                       <span className="friend-username">{user.display_name || user.username}</span>
-                      {user.email && <span className="friend-email">{user.email}</span>}
                     </div>
                     <button
                       className={`add-friend-button ${isAlreadyFriend || requestSent || requestReceived ? 'added' : ''}`}
