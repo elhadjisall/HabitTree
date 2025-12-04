@@ -594,7 +594,11 @@ const MainMenu: React.FC = () => {
               </div>
 
               {habit.trackingType === 'tick_cross' || habit.trackingType === 'quit' ? (
-                <label className="habit-checkbox">
+                <label 
+                  className="habit-checkbox"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => e.stopPropagation()}
+                >
                   <input
                     type="checkbox"
                     checked={state.completed}
@@ -605,7 +609,11 @@ const MainMenu: React.FC = () => {
                   <span className="checkbox-custom"></span>
                 </label>
               ) : (
-                <div className="habit-numeric">
+                <div 
+                  className="habit-numeric"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => e.stopPropagation()}
+                >
                   <input
                     type="number"
                     min="0"
