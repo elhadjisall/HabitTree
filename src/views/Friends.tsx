@@ -301,11 +301,11 @@ const Friends: React.FC = () => {
                     <span className="friend-username">{friend.display_name || friend.username}</span>
                   </div>
                   <button
-                    className="btn-reject"
+                    className="btn-cancel-request"
                     onClick={() => handleRejectRequest(request)}
                     aria-label={`Cancel friend request to ${friend.username}`}
                   >
-                    Cancel
+                    ✕
                   </button>
                 </div>
               );
