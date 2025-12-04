@@ -191,14 +191,22 @@ const FriendTree: React.FC = () => {
               <div className="character-container">
                 <div className="character-placeholder">
                   {mainAvatar && (mainAvatar.startsWith('/') || mainAvatar.startsWith('http')) ? (
-                    <img 
-                      src={mainAvatar} 
-                      alt={user.display_name || user.username} 
-                      className="friend-character-image"
-                      style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                    />
+                    <div className="character-static">
+                      <img 
+                        src={mainAvatar} 
+                        alt={user.display_name || user.username} 
+                        className="character-static-img"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          if (target.parentElement) {
+                            target.parentElement.innerHTML = '<span style="font-size: 5rem;">🌱</span>';
+                          }
+                        }}
+                      />
+                    </div>
                   ) : (
-                    <div className="character-emoji">{mainAvatar || '🌱'}</div>
+                    <div className="character-emoji" style={{ fontSize: '5rem' }}>{mainAvatar || '🌱'}</div>
                   )}
                   <p className="character-name">{user.display_name || user.username}</p>
                 </div>
