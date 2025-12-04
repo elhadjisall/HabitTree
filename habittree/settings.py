@@ -91,27 +91,17 @@ if DATABASE_URL:
         }
     }
 else:
-    # Fall back to SQLite for local development (or use individual env vars for PostgreSQL)
-    USE_SQLITE = config('USE_SQLITE', default=True, cast=bool)
-    if USE_SQLITE:
-        DATABASES = {
-            'default': {
-                'ENGINE': 'django.db.backends.sqlite3',
-                'NAME': BASE_DIR / 'db.sqlite3',
-            }
+    # Use PostgreSQL with individual environment variables
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('DB_NAME', default='habittree'),
+            'USER': config('DB_USER', default='postgres'),
+            'PASSWORD': config('DB_PASSWORD', default=''),
+            'HOST': config('DB_HOST', default='localhost'),
+            'PORT': config('DB_PORT', default='5432'),
         }
-    else:
-        # Use PostgreSQL with individual environment variables
-        DATABASES = {
-            'default': {
-                'ENGINE': 'django.db.backends.postgresql',
-                'NAME': config('DB_NAME', default='habittree'),
-                'USER': config('DB_USER', default='postgres'),
-                'PASSWORD': config('DB_PASSWORD', default=''),
-                'HOST': config('DB_HOST', default='localhost'),
-                'PORT': config('DB_PORT', default='5432'),
-            }
-        }
+    }
 
 # Custom User Model
 AUTH_USER_MODEL = 'api.User'
