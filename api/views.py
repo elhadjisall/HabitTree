@@ -258,6 +258,59 @@ class UserViewSet(viewsets.ModelViewSet):
             'avatar_url': user.avatar_url,
             'leaf_dollars': user.leaf_dollars
         })
+    
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
+    def admin_give_leaf_dollars(self, request):
+        """Admin endpoint to give leaf dollars to a user (requires secret key)"""
+        import os
+        
+        # Simple secret key check - set ADMIN_SECRET in Railway environment variables
+        admin_secret = os.environ.get('ADMIN_SECRET', 'habittree-admin-2024')
+        provided_secret = request.data.get('secret')
+        
+        if provided_secret != admin_secret:
+            return Response(
+                {'error': 'Invalid admin secret'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        username = request.data.get('username')
+        amount = request.data.get('amount')
+        
+        if not username or amount is None:
+            return Response(
+                {'error': 'username and amount are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            # Find user by username or email
+            user = User.objects.filter(username__iexact=username).first()
+            if not user:
+                user = User.objects.filter(email__iexact=username).first()
+            
+            if not user:
+                return Response(
+                    {'error': f'User "{username}" not found'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            old_balance = user.leaf_dollars
+            user.leaf_dollars = int(amount)
+            user.save()
+            
+            return Response({
+                'success': True,
+                'username': user.username,
+                'old_balance': old_balance,
+                'new_balance': user.leaf_dollars
+            })
+        
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class HabitViewSet(viewsets.ModelViewSet):
