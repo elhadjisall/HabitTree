@@ -3,6 +3,7 @@
 import { api, setTokens, clearTokens } from './api';
 import { initializeFirstCharacter, syncCharactersFromBackend, saveUserProfile } from '../utils/charactersStorage';
 import { setLeafDollars } from '../utils/leafDollarsStorage';
+import { syncHabitLogsFromBackend } from '../utils/habitLogsStore';
 
 export interface LoginCredentials {
   email: string;
@@ -80,6 +81,9 @@ export const login = async (credentials: LoginCredentials): Promise<{ access: st
       avatar: user.avatar_url || ''
     });
   }
+  
+  // 4. Sync habit logs from backend (completed habits)
+  await syncHabitLogsFromBackend();
   
   return {
     access: data.access,

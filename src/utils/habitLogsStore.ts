@@ -1,4 +1,7 @@
 // Shared habit logs store - Single source of truth for all habit completion data
+// Now syncs with backend database for persistence
+
+import { api } from '../services/api';
 
 export interface HabitLog {
   habitId: number | string; // Support both legacy number IDs and new string IDs
@@ -6,6 +9,14 @@ export interface HabitLog {
   completed: boolean;
   value?: number; // For numeric habits
   wasRevived?: boolean; // Track if this day was revived (hide revive button)
+}
+
+interface BackendLog {
+  habit_id: number;
+  date: string;
+  completed: boolean;
+  status: string;
+  amount_done?: number | null;
 }
 
 const HABIT_LOGS_KEY = 'habitLogs';
@@ -23,13 +34,54 @@ export const setHabitLogs = (logs: HabitLog[]): void => {
   window.dispatchEvent(new Event('habitLogsChanged'));
 };
 
+// Sync habit logs from backend to localStorage
+export const syncHabitLogsFromBackend = async (): Promise<void> => {
+  try {
+    const token = localStorage.getItem('auth_token');
+    if (!token) return;
+
+    const response = await api.get<{
+      logs: BackendLog[];
+      leaf_dollars: number;
+      unlocked_characters: number[];
+      selected_character: number;
+    }>('/habits/all_logs/');
+
+    if (response.logs) {
+      // Convert backend logs to frontend format
+      const frontendLogs: HabitLog[] = response.logs.map(log => ({
+        habitId: log.habit_id,
+        date: log.date,
+        completed: log.completed,
+        value: log.amount_done || undefined,
+      }));
+
+      // Merge with existing local logs (keep wasRevived flags)
+      const existingLogs = getHabitLogs();
+      const mergedLogs = frontendLogs.map(newLog => {
+        const existingLog = existingLogs.find(
+          l => String(l.habitId) === String(newLog.habitId) && l.date === newLog.date
+        );
+        return {
+          ...newLog,
+          wasRevived: existingLog?.wasRevived || false
+        };
+      });
+
+      setHabitLogs(mergedLogs);
+    }
+  } catch (error) {
+    console.error('Failed to sync habit logs from backend:', error);
+  }
+};
+
 // Get log for specific habit and date
 export const getHabitLog = (habitId: number | string, date: string): HabitLog | undefined => {
   const logs = getHabitLogs();
   return logs.find(log => String(log.habitId) === String(habitId) && log.date === date);
 };
 
-// Update or create a log entry
+// Update or create a log entry (local only - backend is updated via API calls)
 export const updateHabitLog = (habitId: number | string, date: string, completed: boolean, value?: number, wasRevived?: boolean): void => {
   const logs = getHabitLogs();
   const existingIndex = logs.findIndex(log => String(log.habitId) === String(habitId) && log.date === date);

@@ -409,6 +409,40 @@ class HabitViewSet(viewsets.ModelViewSet):
         
         serializer = HabitStatsSerializer(stats)
         return Response(serializer.data)
+    
+    @action(detail=True, methods=['get'])
+    def logs(self, request, pk=None):
+        """Get all logs for a specific habit"""
+        habit = self.get_object()
+        logs = habit.logs.all().order_by('-log_date')
+        return Response({
+            'habit_id': habit.id,
+            'logs': HabitLogSerializer(logs, many=True).data
+        })
+    
+    @action(detail=False, methods=['get'])
+    def all_logs(self, request):
+        """Get all habit logs for the current user (for syncing on login)"""
+        user = request.user
+        habits = Habit.objects.filter(user=user, is_active=True)
+        
+        all_logs = []
+        for habit in habits:
+            for log in habit.logs.all():
+                all_logs.append({
+                    'habit_id': habit.id,
+                    'date': log.log_date.isoformat(),
+                    'completed': log.status == 'completed',
+                    'status': log.status,
+                    'amount_done': float(log.amount_done) if log.amount_done else None,
+                })
+        
+        return Response({
+            'logs': all_logs,
+            'leaf_dollars': user.leaf_dollars,
+            'unlocked_characters': user.unlocked_characters or [],
+            'selected_character': user.selected_character
+        })
 
 
 class RewardViewSet(viewsets.ReadOnlyModelViewSet):
