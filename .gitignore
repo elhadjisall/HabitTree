@@ -28,3 +28,12 @@ dist-ssr
 build/
 coverage/
 .vite/
+
+# Python
+__pycache__/
+*.py[cod]
+*.class
+*.so
+.Python
+db.sqlite3
+*.sqlite3

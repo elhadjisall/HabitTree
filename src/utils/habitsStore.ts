@@ -48,11 +48,16 @@ interface BackendHabit {
 // Map backend habit to frontend format
 const mapBackendToFrontend = (backendHabit: BackendHabit): Habit => {
   // Map tracking_mode to TrackingType
+  // Backend uses: 'daily', 'weekly', 'count', 'time'
+  // Frontend uses: 'tick_cross', 'variable_amount', 'quit'
   let trackingType: TrackingType = 'tick_cross';
-  if (backendHabit.tracking_mode === 'amount' || backendHabit.tracking_mode === 'variable_amount') {
+  if (backendHabit.tracking_mode === 'count' || backendHabit.tracking_mode === 'amount' || backendHabit.tracking_mode === 'variable_amount') {
     trackingType = 'variable_amount';
   } else if (backendHabit.tracking_mode === 'quit') {
     trackingType = 'quit';
+  } else {
+    // 'daily', 'weekly', 'time' all map to 'tick_cross'
+    trackingType = 'tick_cross';
   }
 
   return {
@@ -73,23 +78,35 @@ const mapBackendToFrontend = (backendHabit: BackendHabit): Habit => {
 // Map frontend habit to backend format
 const mapFrontendToBackend = (habit: Omit<Habit, 'id' | 'streak' | 'createdAt'>): Partial<BackendHabit> => {
   // Map TrackingType to tracking_mode
-  let tracking_mode = 'tick';
+  // Frontend uses: 'tick_cross', 'variable_amount', 'quit'
+  // Backend expects: 'daily', 'weekly', 'count', 'time'
+  let tracking_mode = 'daily'; // Default to 'daily' for tick_cross
   if (habit.trackingType === 'variable_amount') {
-    tracking_mode = 'amount';
+    tracking_mode = 'count'; // Use 'count' for variable amount tracking
   } else if (habit.trackingType === 'quit') {
-    tracking_mode = 'quit';
+    tracking_mode = 'daily'; // Use 'daily' for quit habits
   }
 
-  return {
+  const backendData: Partial<BackendHabit> = {
     name: habit.label,
     emoji: habit.emoji,
     color: habit.color,
     tracking_mode,
-    target_amount: habit.target_amount,
-    unit: habit.unit,
     duration_days: habit.duration_days,
     is_public: !habit.isPrivate,
   };
+
+  // Only include target_amount and unit if they are defined (for variable_amount tracking)
+  if (habit.trackingType === 'variable_amount') {
+    if (habit.target_amount !== undefined) {
+      backendData.target_amount = habit.target_amount;
+    }
+    if (habit.unit !== undefined && habit.unit !== '') {
+      backendData.unit = habit.unit;
+    }
+  }
+
+  return backendData;
 };
 
 const HABITS_KEY = 'habits';
@@ -174,11 +191,11 @@ export const updateHabit = async (id: string, updates: Partial<Habit>): Promise<
     if (updates.isPrivate !== undefined) backendData.is_public = !updates.isPrivate;
     if (updates.trackingType !== undefined) {
       if (updates.trackingType === 'variable_amount') {
-        backendData.tracking_mode = 'amount';
+        backendData.tracking_mode = 'count';
       } else if (updates.trackingType === 'quit') {
-        backendData.tracking_mode = 'quit';
+        backendData.tracking_mode = 'daily';
       } else {
-        backendData.tracking_mode = 'tick';
+        backendData.tracking_mode = 'daily';
       }
     }
     if (updates.target_amount !== undefined) backendData.target_amount = updates.target_amount;

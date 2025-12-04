@@ -1,6 +1,7 @@
 // API Service - Handles all backend API calls
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+// Use relative URL to go through Vite proxy, or absolute URL if VITE_API_URL is set
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 // Get auth token from localStorage
 const getToken = (): string | null => {

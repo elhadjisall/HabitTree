@@ -385,7 +385,7 @@ const QuestCreation: React.FC = () => {
                 className="btn btn-primary"
                 onClick={() => {
                   setShowConfirmation(false);
-                  navigate('/');
+                  navigate('/app');
                 }}
               >
                 Go to My Quests

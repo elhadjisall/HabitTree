@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Sprout, X, Mail, Lock, User, LogIn, UserPlus } from 'lucide-react';
 import './LandingPage.css';
 import { login, register, type LoginCredentials, type RegisterData } from '../services/auth';
+
+const characterImage = '/assets/characters/bike-character.jpeg'; 
+const bannerImage = '/assets/characters/three-characters.jpeg';
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -16,6 +20,7 @@ const LandingPage: React.FC = () => {
 
   const handleGetStarted = () => {
     setShowAuthModal(true);
+    setIsLogin(false); 
     setError('');
   };
 
@@ -73,163 +78,296 @@ const LandingPage: React.FC = () => {
     setError('');
   };
 
+  const openModal = (loginMode: boolean) => {
+    setIsLogin(loginMode);
+    setShowAuthModal(true);
+    setError('');
+  };
+
   const features = [
     {
-      emoji: '🎮',
-      title: 'Gamified',
-      description: 'Turn habits into a fun leveling system.'
+      emoji: '🌳',
+      title: 'Visual Streak Growth',
+      description: 'Watch your habits transform into beautiful trees. The longer your streak, the mightier your forest!'
     },
     {
-      emoji: '🔥',
-      title: 'Streaks',
-      description: 'Build daily consistency and protect your streaks.'
+      emoji: '🍃',
+      title: 'Earn Leaf Dollars',
+      description: 'Complete habits to earn currency. Spend it on unlocking adorable character companions!'
+    },
+    {
+      emoji: '🐸',
+      title: 'Unlock Cool Characters',
+      description: 'Collect cute companions that cheer you on. Each character brings unique motivation vibes!'
     },
     {
       emoji: '📈',
-      title: 'Visual Progress',
-      description: 'Grow your habit tree as you improve.'
-    },
-    {
-      emoji: '🧑‍🤝‍🧑',
-      title: 'Unlockable Characters',
-      description: 'Earn new companions as rewards.'
-    },
-    {
-      emoji: '🎨',
-      title: 'Customizable Habits',
-      description: 'Create habits that match your goals.'
-    },
-    {
-      emoji: '🌟',
-      title: 'Better You',
-      description: 'Small daily steps → big results.'
+      title: 'Track Your Progress',
+      description: 'Beautiful charts and insights to see how far you\'ve come on your habit journey.'
     }
   ];
 
   return (
-    <div className="landing-page">
-      {/* Top Title */}
-      <header className="landing-header">
-        <h1 className="landing-title">
-          Habi<span className="tree-emoji">🌲</span>ree
-        </h1>
+    <div className="app">
+      {/* Header */}
+      <header className="header">
+        <div className="logo">
+          <div className="logo-icon">
+            <Sprout className="icon" />
+          </div>
+          <div>
+            <h1 className="logo-title">HabitTree</h1>
+            <p className="logo-subtitle">Grow with every habit</p>
+          </div>
+        </div>
+        <div className="header-buttons">
+          <button onClick={() => openModal(true)} className="btn-outline">
+            <LogIn className="icon-sm" />
+            Login
+          </button>
+          <button onClick={() => openModal(false)} className="btn-primary">
+            <UserPlus className="icon-sm" />
+            Sign Up
+          </button>
+        </div>
       </header>
 
-      {/* First Big Horizontal Image Slot */}
-      <div className="image-placeholder image-placeholder-large">
-        <span className="placeholder-text">Image Placeholder – Three Characters</span>
-      </div>
+      {/* Hero Section */}
+      <main className="main">
+        <section className="hero">
+          <div className="badge">
+            <span>🌟 Plant Your Success Journey</span>
+          </div>
 
-      {/* Get Started Button */}
-      <div className="cta-section">
-        <button className="get-started-btn" onClick={handleGetStarted}>
-          Get Started
-        </button>
-      </div>
+          <h1 className="hero-title">
+            Watch Your Habits
+            <br />
+            <span className="hero-accent">Grow Into Trees 🌳</span>
+          </h1>
 
-      {/* Features Grid */}
-      <section className="features-section">
-        <div className="features-grid">
+          <p className="hero-text">
+            Build powerful habits and watch your personal forest flourish. 
+            Earn Leaf Dollars 🍃, unlock adorable companions, and visualize your growth journey!
+          </p>
+
+          <div className="hero-buttons">
+            <button onClick={() => openModal(false)} className="btn-primary-lg">
+              Start Growing Free
+            </button>
+            <button onClick={() => openModal(true)} className="btn-outline-lg">
+              I Already Have an Account
+            </button>
+          </div>
+
+          {/* Character Image Section */}
+          <div className="character-section">
+            <div className="character-image-container">
+              <img 
+                src={characterImage} 
+                alt="HabitTree characters - cute companions cheering you on" 
+                className="character-image"
+              />
+              <div className="character-image-overlay">
+                <span className="overlay-text">Meet your habit companions!</span>
+              </div>
+            </div>
+            <p className="character-description">
+              Unlock cool characters that will motivate and cheer you on throughout your habit journey!
+            </p>
+          </div>
+
+          <div className="tree-growth">
+            <div className="tree-stage">
+              <div className="tree-box">
+                <span className="tree-emoji">🌱</span>
+              </div>
+              <p className="tree-label">Day 1-7</p>
+              <p className="tree-name">Seedling</p>
+              <p className="tree-reward">+10 🍃</p>
+            </div>
+            <div className="tree-stage">
+              <div className="tree-box">
+                <span className="tree-emoji">🌿</span>
+              </div>
+              <p className="tree-label">Day 8-30</p>
+              <p className="tree-name">Sapling</p>
+              <p className="tree-reward">+25 🍃</p>
+            </div>
+            <div className="tree-stage active">
+              <div className="tree-box active">
+                <span className="tree-emoji">🌳</span>
+              </div>
+              <p className="tree-label active">Day 30+</p>
+              <p className="tree-name active">Mighty Tree</p>
+              <p className="tree-reward">+50 🍃</p>
+            </div>
+            <div className="tree-stage">
+              <div className="tree-box">
+                <span className="tree-emoji">🏞️</span>
+              </div>
+              <p className="tree-label">Day 90+</p>
+              <p className="tree-name">Ancient Forest</p>
+              <p className="tree-reward">+100 🍃</p>
+            </div>
+          </div>
+        </section>
+
+        <section className="features">
           {features.map((feature, index) => (
-            <div key={index} className="feature-box">
-              <div className="feature-emoji">{feature.emoji}</div>
+            <div key={index} className="feature-card">
+              <div className="feature-icon">{feature.emoji}</div>
               <h3 className="feature-title">{feature.title}</h3>
-              <p className="feature-description">{feature.description}</p>
+              <p className="feature-text">{feature.description}</p>
             </div>
           ))}
-        </div>
-      </section>
+        </section>
 
-      {/* Final Big Banner Image Slot */}
-      <div className="image-placeholder image-placeholder-banner">
-        <span className="placeholder-text">Coming Soon – Character Banner Slot</span>
-      </div>
+        <section className="banner-section">
+          <div className="banner-container">
+            <div className="banner-content">
+              <h2 className="banner-title">Ready to Grow Your Forest?</h2>
+              <p className="banner-text">
+                Join thousands of users who have transformed their habits into beautiful forests. 
+                Start your journey today and watch your personal growth blossom!
+              </p>
+              <button onClick={() => openModal(false)} className="btn-primary-lg">
+                Plant Your First Tree 🌱
+              </button>
+            </div>
+            <div className="banner-image-placeholder">
+              <span className="banner-image-text">Your Forest Awaits</span>
+              <img src={bannerImage} alt="Beautiful forest representation" className="banner-image" />
+            </div>
+          </div>
+        </section>
+      </main>
 
       {/* Authentication Modal */}
       {showAuthModal && (
-        <div className="auth-modal-overlay" onClick={() => setShowAuthModal(false)}>
-          <div className="auth-modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="auth-modal-close" onClick={() => setShowAuthModal(false)}>
-              ✕
+        <div className="modal-overlay" onClick={() => setShowAuthModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setShowAuthModal(false)} className="modal-close">
+              <X className="icon" />
             </button>
-            <h2 className="auth-modal-title">Welcome to Habitree 🌲</h2>
+
+            <div className="modal-header">
+              <div className="modal-icon">
+                <Sprout className="icon-lg" />
+              </div>
+              <h2 className="modal-title">
+                {isLogin ? 'Welcome Back!' : 'Start Your Journey'}
+              </h2>
+              <p className="modal-subtitle">
+                {isLogin ? 'Continue growing your habit forest 🌳' : 'Plant your first habit tree today 🌱'}
+              </p>
+            </div>
+
             {error && (
-              <div className="auth-error" style={{ 
-                color: '#ff6b6b', 
-                padding: '10px', 
-                marginBottom: '15px', 
-                background: 'rgba(255, 107, 107, 0.1)', 
-                borderRadius: '8px',
-                fontSize: '14px'
-              }}>
+              <div className="auth-error">
                 {error}
               </div>
             )}
-            <form className="auth-form" onSubmit={handleAuth}>
+
+            <form onSubmit={handleAuth} className="modal-form" noValidate>
               {!isLogin && (
-                <div className="auth-input-group">
-                  <label htmlFor="username">Username</label>
+                <div className="form-group">
+                  <label className="form-label">Username</label>
+                  <div className="input-wrapper">
+                    <User className="input-icon" />
+                    <input
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      className="input"
+                      placeholder="Enter your username"
+                      required={!isLogin}
+                      disabled={loading}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="form-group">
+                <label className="form-label">Email Address</label>
+                <div className="input-wrapper">
+                  <Mail className="input-icon" />
                   <input
-                    type="text"
-                    id="username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Enter your username"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="input"
+                    placeholder="you@example.com"
                     required
                     disabled={loading}
                   />
                 </div>
-              )}
-              <div className="auth-input-group">
-                <label htmlFor="email">Email</label>
-                <input
-                  type="email"
-                  id="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
-                  required
-                  disabled={loading}
-                />
               </div>
-              <div className="auth-input-group">
-                <label htmlFor="password">Password</label>
-                <input
-                  type="password"
-                  id="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  required
-                  disabled={loading}
-                  minLength={isLogin ? undefined : 8}
-                />
-              </div>
-              {!isLogin && (
-                <div className="auth-input-group">
-                  <label htmlFor="password2">Confirm Password</label>
+
+              <div className="form-group">
+                <label className="form-label">Password</label>
+                <div className="input-wrapper">
+                  <Lock className="input-icon" />
                   <input
                     type="password"
-                    id="password2"
-                    value={password2}
-                    onChange={(e) => setPassword2(e.target.value)}
-                    placeholder="Confirm your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="input"
+                    placeholder="••••••••"
                     required
                     disabled={loading}
-                    minLength={8}
+                    minLength={isLogin ? undefined : 8}
                   />
                 </div>
+              </div>
+
+              {!isLogin && (
+                <div className="form-group">
+                  <label className="form-label">Confirm Password</label>
+                  <div className="input-wrapper">
+                    <Lock className="input-icon" />
+                    <input
+                      type="password"
+                      value={password2}
+                      onChange={(e) => setPassword2(e.target.value)}
+                      className="input"
+                      placeholder="••••••••"
+                      required={!isLogin}
+                      disabled={loading}
+                      minLength={8}
+                    />
+                  </div>
+                </div>
               )}
-              <button type="submit" className="auth-submit-btn" disabled={loading}>
-                {loading ? 'Please wait...' : (isLogin ? 'Log In' : 'Create Account')}
+
+              {isLogin && (
+                <div className="form-footer">
+                  <label className="checkbox-label">
+                    <input type="checkbox" className="checkbox" />
+                    <span>Remember me</span>
+                  </label>
+                  <a href="#" className="link">Forgot password?</a>
+                </div>
+              )}
+
+              <button type="submit" className="btn-submit" disabled={loading}>
+                {loading ? 'Please wait...' : (isLogin ? 'Continue Growing' : 'Plant Your First Tree')}
               </button>
+
+              {!isLogin && (
+                <div className="bonus-banner">
+                  🎁 Start with <span>50 Leaf Dollars</span> bonus!
+                </div>
+              )}
             </form>
-            <p className="auth-toggle">
-              {isLogin ? "Don't have an account? " : "Already have an account? "}
-              <button type="button" className="auth-toggle-btn" onClick={toggleAuthMode} disabled={loading}>
-                {isLogin ? 'Create Account' : 'Log In'}
-              </button>
-            </p>
+
+            <div className="modal-footer">
+              <p>
+                {isLogin ? "Don't have an account? " : "Already have an account? "}
+                <button onClick={toggleAuthMode} className="link" disabled={loading}>
+                  {isLogin ? 'Sign up' : 'Login'}
+                </button>
+              </p>
+            </div>
           </div>
         </div>
       )}
