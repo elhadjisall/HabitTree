@@ -26,8 +26,8 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     
     def get_permissions(self):
-        """Allow registration without authentication"""
-        if self.action == 'create':
+        """Allow registration and admin endpoints without authentication"""
+        if self.action in ['create', 'admin_give_leaf_dollars']:
             return [AllowAny()]
         return [IsAuthenticated()]
     
