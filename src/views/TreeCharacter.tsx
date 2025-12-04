@@ -60,7 +60,14 @@ const TreeCharacter: React.FC = () => {
   const [selectedHabit, setSelectedHabit] = useState<string>(habits.length > 0 ? habits[0].id : '');
   const [selectedCharacter, setSelectedCharacter] = useState<number>(() => {
     const stored = localStorage.getItem('selectedCharacter');
-    return stored ? parseInt(stored) : BASE_CHARACTERS[0].id;
+    const storedId = stored ? parseInt(stored) : BASE_CHARACTERS[0].id;
+    // Make sure the stored character is actually unlocked
+    const unlockedIds = getUnlockedCharacterIds();
+    if (unlockedIds.includes(storedId)) {
+      return storedId;
+    }
+    // If not unlocked, return first unlocked character or default
+    return unlockedIds.length > 0 ? unlockedIds[0] : BASE_CHARACTERS[0].id;
   });
   const [showShop, setShowShop] = useState<boolean>(false);
   const [leafDollarsState, setLeafDollarsState] = useState<number>(getLeafDollars());
@@ -69,10 +76,16 @@ const TreeCharacter: React.FC = () => {
     return hour >= 18 || hour < 6; // 6 PM to 6 AM
   });
 
-  // Sync leaf dollars with global storage
+  // Sync leaf dollars with global storage and verify selected character
   useEffect(() => {
     const storedLeafDollars = getLeafDollars();
     setLeafDollarsState(storedLeafDollars);
+    
+    // Verify selected character is still valid
+    const unlockedIds = getUnlockedCharacterIds();
+    if (!unlockedIds.includes(selectedCharacter) && unlockedIds.length > 0) {
+      setSelectedCharacter(unlockedIds[0]);
+    }
   }, []);
 
   // Check day/night every minute
