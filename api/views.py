@@ -27,7 +27,7 @@ class UserViewSet(viewsets.ModelViewSet):
     
     def get_permissions(self):
         """Allow registration and admin endpoints without authentication"""
-        if self.action in ['create', 'admin_give_leaf_dollars']:
+        if self.action in ['create', 'admin_give_leaf_dollars', 'admin_set_all_leaf_dollars']:
             return [AllowAny()]
         return [IsAuthenticated()]
     
@@ -304,6 +304,45 @@ class UserViewSet(viewsets.ModelViewSet):
                 'username': user.username,
                 'old_balance': old_balance,
                 'new_balance': user.leaf_dollars
+            })
+        
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
+    def admin_set_all_leaf_dollars(self, request):
+        """Admin endpoint to set leaf dollars for ALL users (requires secret key)"""
+        import os
+        
+        # Simple secret key check
+        admin_secret = os.environ.get('ADMIN_SECRET', 'habittree-admin-2024')
+        provided_secret = request.data.get('secret')
+        
+        if provided_secret != admin_secret:
+            return Response(
+                {'error': 'Invalid admin secret'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        amount = request.data.get('amount')
+        
+        if amount is None:
+            return Response(
+                {'error': 'amount is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            # Update all users' leaf dollars
+            updated_count = User.objects.all().update(leaf_dollars=int(amount))
+            
+            return Response({
+                'success': True,
+                'users_updated': updated_count,
+                'new_balance': int(amount)
             })
         
         except Exception as e:
