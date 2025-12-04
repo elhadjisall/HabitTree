@@ -79,12 +79,12 @@
 /* Create button (center) special styling */
 .nav-item-create {
   position: relative;
-  bottom: 10px;
+  bottom: 0;
   background: linear-gradient(135deg, var(--accent-primary), var(--accent-success));
   color: white;
-  width: 60px;
-  height: 60px;
-  min-width: 60px;
+  width: 50px;
+  height: 50px;
+  min-width: 50px;
   border-radius: 50%;
   box-shadow: 0 4px 15px rgba(106, 176, 76, 0.4);
   display: flex;
@@ -111,7 +111,7 @@
 }
 
 .nav-icon-create {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   line-height: 1;
 }
 
@@ -135,10 +135,10 @@
   }
 
   .nav-item-create {
-    width: 64px;
-    height: 64px;
-    min-width: 64px;
-    bottom: 12px;
+    width: 54px;
+    height: 54px;
+    min-width: 54px;
+    bottom: 0;
   }
 }
 
@@ -167,13 +167,13 @@
   }
 
   .nav-item-create {
-    width: 68px;
-    height: 68px;
-    min-width: 68px;
-    bottom: 12px;
+    width: 56px;
+    height: 56px;
+    min-width: 56px;
+    bottom: 0;
   }
 
   .nav-icon-create {
-    font-size: 2rem;
+    font-size: 1.75rem;
   }
 }

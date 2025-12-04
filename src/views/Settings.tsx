@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './Settings.css';
 import { getDarkMode, setDarkMode } from '../utils/darkModeStorage';
-import { getUserProfile, updateUsername, updateAvatar, getUnlockedCharacters, getCharacterById } from '../utils/charactersStorage';
+import { getUserProfile, updateUsername, updateAvatar, getUnlockedCharacters, getCharacterById, getSelectedCharacter } from '../utils/charactersStorage';
 import { getCompanionSlots, setCompanionSlots, getMaxCompanionSlots } from '../utils/companionSlotsStorage';
 import { useHabits } from '../hooks/useHabits';
 import { getCurrentUser, updateUserProfile, logout } from '../services/auth';
@@ -41,11 +41,15 @@ const Settings: React.FC = () => {
   // Fetch user data from backend on mount
   useEffect(() => {
     const fetchUserData = async () => {
+      // Get the current selected character as default
+      const selectedChar = getSelectedCharacter();
+      const defaultAvatar = selectedChar.iconPath;
+      
       try {
         const user = await getCurrentUser();
         if (user) {
           // Convert full URL to relative path if needed for display
-          let avatarPath = user.avatar_url || userProfile.avatar;
+          let avatarPath = user.avatar_url || userProfile.avatar || defaultAvatar;
           if (avatarPath && avatarPath.startsWith('http')) {
             // Extract relative path from full URL
             try {
@@ -56,6 +60,11 @@ const Settings: React.FC = () => {
             }
           }
           
+          // If avatar is still empty, use the default selected character
+          if (!avatarPath) {
+            avatarPath = defaultAvatar;
+          }
+          
           setProfile({
             username: user.display_name || user.username,
             email: user.email,
@@ -64,18 +73,18 @@ const Settings: React.FC = () => {
         } else {
           // Fallback to local storage profile if no user
           setProfile({
-            username: userProfile.username,
+            username: userProfile.username || 'User',
             email: 'user@example.com',
-            profilePicture: userProfile.avatar,
+            profilePicture: userProfile.avatar || defaultAvatar,
           });
         }
       } catch (error) {
         console.error('Failed to fetch user data:', error);
         // Fallback to local storage profile on error
         setProfile({
-          username: userProfile.username,
+          username: userProfile.username || 'User',
           email: 'user@example.com',
-          profilePicture: userProfile.avatar,
+          profilePicture: userProfile.avatar || defaultAvatar,
         });
       } finally {
         setIsLoading(false);
