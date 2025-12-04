@@ -15,7 +15,7 @@ export const BASE_CHARACTERS: Character[] = [
   {
     id: 1,
     name: 'Mape',
-    iconPath: '/assets/characters/mape-icon.png',
+    iconPath: '/assets/characters/mape-icon.jpeg',
     animatedRivePath: '/assets/characters/mape-animated.riv',
     backgroundPath: '/assets/backgrounds/character-background.jpg',
     unlocked: false,
@@ -34,7 +34,7 @@ export const BASE_CHARACTERS: Character[] = [
   {
     id: 2,
     name: 'Ban',
-    iconPath: '/assets/characters/ban-icon.png',
+    iconPath: '/assets/characters/ban-icon.jpeg',
     animatedRivePath: '/assets/characters/ban-animated.riv',
     backgroundPath: '/assets/backgrounds/character-background.jpg',
     unlocked: false,
@@ -53,7 +53,7 @@ export const BASE_CHARACTERS: Character[] = [
   {
     id: 3,
     name: 'Saku',
-    iconPath: '/assets/characters/saku-icon.png',
+    iconPath: '/assets/characters/saku-icon.jpeg',
     animatedRivePath: '/assets/characters/saku-animated.riv',
     backgroundPath: '/assets/backgrounds/character-background.jpg',
     unlocked: false,
