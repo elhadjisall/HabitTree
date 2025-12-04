@@ -344,17 +344,12 @@ const MainMenu: React.FC = () => {
         // Save completion to logs with wasRevived flag
         if (habit.trackingType === 'variable_amount' && habit.target_amount) {
           updateHabitLog(habit.id, dateString, true, habit.target_amount, true);
-          setHabitStates(prev => ({
-            ...prev,
-            [habit.id]: { ...prev[habit.id], currentValue: habit.target_amount!, completed: true }
-          }));
         } else {
           updateHabitLog(habit.id, dateString, true, undefined, true);
-          setHabitStates(prev => ({
-            ...prev,
-            [habit.id]: { ...prev[habit.id], completed: true }
-          }));
         }
+
+        // Reload habit states to reflect the change
+        loadHabitStates();
 
         setCompletedHabitId(habit.id);
         setTimeout(() => setCompletedHabitId(null), 600);
@@ -446,26 +441,51 @@ const MainMenu: React.FC = () => {
     setQuestToRemove(null);
   };
 
-  const confirmReviveYesterday = (): void => {
+  const confirmReviveYesterday = async (): Promise<void> => {
     if (reviveConfirmModal.habit) {
       const habit = reviveConfirmModal.habit;
-      const newBalance = subtractLeafDollars(10);
-      setLeafDollarsState(newBalance);
 
       // Calculate yesterday's date
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
       const yesterdayString = formatDate(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
 
-      // Mark yesterday as completed with wasRevived flag
-      if (habit.trackingType === 'variable_amount' && habit.target_amount) {
-        updateHabitLog(habit.id, yesterdayString, true, habit.target_amount, true);
-      } else {
-        updateHabitLog(habit.id, yesterdayString, true, undefined, true);
-      }
+      try {
+        // Revive via backend API
+        const response = await api.post<{remaining_leaf_dollars?: number}>(`/habits/${habit.id}/revive/`, {
+          date: yesterdayString
+        });
 
-      setReviveConfirmModal({ isOpen: false, habit: null });
-      setReviveSuccessModal(true);
+        // Update leaf dollars from backend response
+        if (response.remaining_leaf_dollars !== undefined) {
+          setLeafDollarsState(response.remaining_leaf_dollars);
+          setLeafDollars(response.remaining_leaf_dollars);
+        } else {
+          const newBalance = subtractLeafDollars(10);
+          setLeafDollarsState(newBalance);
+        }
+
+        // Refresh habits to get updated streak
+        await getHabits();
+        window.dispatchEvent(new Event('habitsChanged'));
+
+        // Mark yesterday as completed with wasRevived flag
+        if (habit.trackingType === 'variable_amount' && habit.target_amount) {
+          updateHabitLog(habit.id, yesterdayString, true, habit.target_amount, true);
+        } else {
+          updateHabitLog(habit.id, yesterdayString, true, undefined, true);
+        }
+
+        // Reload habit states to reflect the change
+        loadHabitStates();
+
+        setReviveConfirmModal({ isOpen: false, habit: null });
+        setReviveSuccessModal(true);
+      } catch (error: any) {
+        console.error('Failed to revive yesterday:', error);
+        setReviveConfirmModal({ isOpen: false, habit: null });
+        alert(error?.message || 'Failed to revive streak. Please try again.');
+      }
     }
   };
 
