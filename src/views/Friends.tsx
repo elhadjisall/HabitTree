@@ -15,12 +15,12 @@ import {
 
 // Helper to get avatar emoji from avatar_url
 const getAvatarEmoji = (avatarUrl?: string): string => {
-  if (!avatarUrl) return '👤';
+  if (!avatarUrl) return '';
   // Extract emoji from URL or return default
   // If avatar_url is an emoji string, return it
   if (avatarUrl.length <= 2) return avatarUrl;
   // If it's a path, try to extract emoji or return default
-  return avatarUrl.includes('emoji') ? '👤' : avatarUrl;
+  return avatarUrl.includes('emoji') ? '' : avatarUrl;
 };
 
 const Friends: React.FC = () => {

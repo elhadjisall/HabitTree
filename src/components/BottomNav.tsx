@@ -36,7 +36,7 @@ const BottomNav: React.FC = () => {
         className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}
         aria-label="Friends"
       >
-        <div className="nav-icon">👤</div>
+        <div className="nav-icon">👥</div>
         <span className="nav-label">Friends</span>
       </NavLink>
 

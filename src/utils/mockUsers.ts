@@ -32,7 +32,7 @@ export interface MockUser {
 export const MOCK_USERS: MockUser[] = [
   {
     username: '@samurai_jake',
-    avatar: '🥷',
+    avatar: '',
     publicHabits: [
       { name: 'Meditation', emoji: '🧘', color: '#9b59b6', streak: 12, progress: 40, isPrivate: false },
       { name: 'Reading', emoji: '📚', color: '#3498db', streak: 7, progress: 20, isPrivate: false },
@@ -40,8 +40,8 @@ export const MOCK_USERS: MockUser[] = [
     privateHabits: [
       { name: 'No Sugar', emoji: '🚫', color: '#e74c3c', streak: 5, progress: 15, isPrivate: true },
     ],
-    characters: ['🥷', '🦊', '🦌', '🐰'],
-    companionSlots: ['🥷', '🦊', '🦌', '🐰', '', '', '', ''],
+    characters: [],
+    companionSlots: ['', '', '', '', '', '', '', ''],
     questHistory: [
       { id: 'hist_1', label: 'Morning Workout', emoji: '💪', color: '#e67e22', highestStreak: 15, daysCompleted: 25, daysMissed: 5 },
       { id: 'hist_2', label: 'Journaling', emoji: '📝', color: '#1abc9c', highestStreak: 20, daysCompleted: 28, daysMissed: 2 },
@@ -49,27 +49,27 @@ export const MOCK_USERS: MockUser[] = [
   },
   {
     username: '@moonwalker',
-    avatar: '🦊',
+    avatar: '',
     publicHabits: [
       { name: 'Running', emoji: '🏃', color: '#e74c3c', streak: 3, progress: 10, isPrivate: false },
     ],
     privateHabits: [],
-    characters: ['🦊', '🐢', '🦉'],
-    companionSlots: ['🦊', '🐢', '🦉', '', '', '', '', ''],
+    characters: [],
+    companionSlots: ['', '', '', '', '', '', '', ''],
     questHistory: [
       { id: 'hist_3', label: 'Drink Water', emoji: '💧', color: '#3498db', highestStreak: 10, daysCompleted: 20, daysMissed: 10 },
     ],
   },
   {
     username: '@kitsune',
-    avatar: '🦊',
+    avatar: '',
     publicHabits: [
       { name: 'Practice Japanese', emoji: '🇯🇵', color: '#e91e63', streak: 22, progress: 73, isPrivate: false },
       { name: 'Wake Up Early', emoji: '⏰', color: '#ff9800', streak: 9, progress: 30, isPrivate: false },
     ],
     privateHabits: [],
-    characters: ['🦊', '🥷', '🐉'],
-    companionSlots: ['🦊', '🥷', '🐉', '', '', '', '', ''],
+    characters: [],
+    companionSlots: ['', '', '', '', '', '', '', ''],
     questHistory: [],
   },
 ];

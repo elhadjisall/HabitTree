@@ -254,13 +254,13 @@ const Settings: React.FC = () => {
                   const target = e.target as HTMLImageElement;
                   target.style.display = 'none';
                   if (target.parentElement) {
-                    target.parentElement.textContent = '👤';
+                    target.parentElement.textContent = '';
                   }
                 }}
               />
             ) : (
               <div style={{ fontSize: '3rem', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
-                {profile.profilePicture || '👤'}
+                {profile.profilePicture || ''}
               </div>
             )}
           </div>

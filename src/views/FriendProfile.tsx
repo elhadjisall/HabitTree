@@ -5,9 +5,9 @@ import { getFriendProfileByUsername, type FriendProfile as FriendProfileType } f
 
 // Helper to get avatar emoji from avatar_url
 const getAvatarEmoji = (avatarUrl?: string): string => {
-  if (!avatarUrl) return '👤';
+  if (!avatarUrl) return '';
   if (avatarUrl.length <= 2) return avatarUrl;
-  return avatarUrl.includes('emoji') ? '👤' : avatarUrl;
+  return avatarUrl.includes('emoji') ? '' : avatarUrl;
 };
 
 const FriendProfile: React.FC = () => {

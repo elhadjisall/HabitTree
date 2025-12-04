@@ -92,7 +92,7 @@ const LandingPage: React.FC = () => {
       description: 'Complete habits to earn currency. Spend it on unlocking adorable character companions!'
     },
     {
-      emoji: '🐸',
+      emoji: '🌟',
       title: 'Unlock Cool Characters',
       description: 'Collect cute companions that cheer you on. Each character brings unique motivation vibes!'
     },

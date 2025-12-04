@@ -103,7 +103,7 @@ const FriendTree: React.FC = () => {
 
   const selectedHabit = profile.public_habits.find(h => h.id === selectedHabitId) || profile.public_habits[0];
   const currentProgress = selectedHabit ? selectedHabit.progress : 0;
-  const mainAvatar = user.avatar_url || (profile.characters && profile.characters.length > 0 ? profile.characters[0] : '🦊');
+  const mainAvatar = user.avatar_url || (profile.characters && profile.characters.length > 0 ? profile.characters[0] : '');
 
   return (
     <div className="tree-character">

@@ -115,16 +115,16 @@ const Calendar: React.FC = () => {
     const characterId = storedCharacterId ? parseInt(storedCharacterId) : 1;
 
     const characters = [
-      { id: 1, emoji: '🦊' },
-      { id: 2, emoji: '🦉' },
-      { id: 3, emoji: '🐰' },
-      { id: 4, emoji: '🦌' },
-      { id: 5, emoji: '🐢' },
-      { id: 6, emoji: '🐉' },
+      { id: 1, emoji: '' },
+      { id: 2, emoji: '' },
+      { id: 3, emoji: '' },
+      { id: 4, emoji: '' },
+      { id: 5, emoji: '' },
+      { id: 6, emoji: '' },
     ];
 
     const character = characters.find(c => c.id === characterId);
-    return character ? character.emoji : '🦊';
+    return character ? character.emoji : '';
   };
 
   // Handle clicking on a missed day
