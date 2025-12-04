@@ -6,18 +6,14 @@ import { getFriendProfileByUsername, type FriendProfile } from '../services/frie
 import { useRive } from '@rive-app/react-canvas';
 import { BASE_CHARACTERS } from '../utils/charactersStorage';
 
-// Get tree level based on progress (0-10%, 11-20%, ..., 91-100%)
+// Get tree level based on progress (0-20%, 21-40%, 41-60%, 61-80%, 81-100%)
+// Using 5 levels (0-4) based on available tree Rive files
 const getTreeLevel = (progress: number): number => {
-  if (progress <= 10) return 0;
-  if (progress <= 20) return 1;
-  if (progress <= 30) return 2;
-  if (progress <= 40) return 3;
-  if (progress <= 50) return 4;
-  if (progress <= 60) return 5;
-  if (progress <= 70) return 6;
-  if (progress <= 80) return 7;
-  if (progress <= 90) return 8;
-  return 9;
+  if (progress <= 20) return 0;
+  if (progress <= 40) return 1;
+  if (progress <= 60) return 2;
+  if (progress <= 80) return 3;
+  return 4;
 };
 
 // Rive Tree Animation Component

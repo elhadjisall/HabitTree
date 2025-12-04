@@ -40,18 +40,14 @@ const RiveTree: React.FC<RiveTreeProps> = ({ level }) => {
   return <RiveComponent className="tree-rive" />;
 };
 
-// Get tree level based on progress (0-10%, 11-20%, ..., 91-100%)
+// Get tree level based on progress (0-20%, 21-40%, 41-60%, 61-80%, 81-100%)
+// Using 5 levels (0-4) based on available tree Rive files
 const getTreeLevel = (progress: number): number => {
-  if (progress <= 10) return 0;
-  if (progress <= 20) return 1;
-  if (progress <= 30) return 2;
-  if (progress <= 40) return 3;
-  if (progress <= 50) return 4;
-  if (progress <= 60) return 5;
-  if (progress <= 70) return 6;
-  if (progress <= 80) return 7;
-  if (progress <= 90) return 8;
-  return 9;
+  if (progress <= 20) return 0;
+  if (progress <= 40) return 1;
+  if (progress <= 60) return 2;
+  if (progress <= 80) return 3;
+  return 4;
 };
 
 
@@ -60,14 +56,7 @@ const TreeCharacter: React.FC = () => {
   const [selectedHabit, setSelectedHabit] = useState<string>(habits.length > 0 ? habits[0].id : '');
   const [selectedCharacter, setSelectedCharacter] = useState<number>(() => {
     const stored = localStorage.getItem('selectedCharacter');
-    const storedId = stored ? parseInt(stored) : BASE_CHARACTERS[0].id;
-    // Make sure the stored character is actually unlocked
-    const unlockedIds = getUnlockedCharacterIds();
-    if (unlockedIds.includes(storedId)) {
-      return storedId;
-    }
-    // If not unlocked, return first unlocked character or default
-    return unlockedIds.length > 0 ? unlockedIds[0] : BASE_CHARACTERS[0].id;
+    return stored ? parseInt(stored) : BASE_CHARACTERS[0].id;
   });
   const [showShop, setShowShop] = useState<boolean>(false);
   const [leafDollarsState, setLeafDollarsState] = useState<number>(getLeafDollars());
@@ -75,16 +64,25 @@ const TreeCharacter: React.FC = () => {
     const hour = new Date().getHours();
     return hour >= 18 || hour < 6; // 6 PM to 6 AM
   });
+  const [unlockedIds, setUnlockedIds] = useState<number[]>(getUnlockedCharacterIds());
 
-  // Sync leaf dollars with global storage and verify selected character
+  // Sync leaf dollars and unlocked characters from storage
   useEffect(() => {
     const storedLeafDollars = getLeafDollars();
     setLeafDollarsState(storedLeafDollars);
     
-    // Verify selected character is still valid
-    const unlockedIds = getUnlockedCharacterIds();
-    if (!unlockedIds.includes(selectedCharacter) && unlockedIds.length > 0) {
-      setSelectedCharacter(unlockedIds[0]);
+    // Re-read selected character and unlocked IDs from localStorage
+    const stored = localStorage.getItem('selectedCharacter');
+    const storedId = stored ? parseInt(stored) : BASE_CHARACTERS[0].id;
+    const currentUnlockedIds = getUnlockedCharacterIds();
+    
+    setUnlockedIds(currentUnlockedIds);
+    
+    // If the stored character is unlocked, use it; otherwise use first unlocked
+    if (currentUnlockedIds.includes(storedId)) {
+      setSelectedCharacter(storedId);
+    } else if (currentUnlockedIds.length > 0) {
+      setSelectedCharacter(currentUnlockedIds[0]);
     }
   }, []);
 
@@ -120,9 +118,7 @@ const TreeCharacter: React.FC = () => {
   const currentHabit = habits.find(h => h.id === selectedHabit);
   const currentProgress = selectedHabit ? calculateProgress(selectedHabit) : 0;
 
-  // Get all characters with unlocked status
-  const unlockedIds = getUnlockedCharacterIds();
-
+  // Get all characters with unlocked status (using state that's synced from localStorage)
   const allCharacters = BASE_CHARACTERS.map(char => ({
     ...char,
     unlocked: unlockedIds.includes(char.id)
