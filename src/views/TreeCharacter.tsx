@@ -42,18 +42,18 @@ const RiveTree: React.FC<RiveTreeProps> = ({ level }) => {
 
 // Get tree level based on progress percentage
 // 6 levels (0-5) corresponding to tree-level-0.riv through tree-level-5.riv
-// Level 0: Seed (0%)
-// Level 1: Sprout (1-20%)
-// Level 2: Small tree (21-40%)
-// Level 3: Medium tree (41-60%)
-// Level 4: Large tree (61-80%)
-// Level 5: Full grown tree (81-100%)
+// Level 0: Seed (0-16%)
+// Level 1: Sprout (17-33%)
+// Level 2: Small tree (34-50%)
+// Level 3: Medium tree (51-66%)
+// Level 4: Large tree (67-83%)
+// Level 5: Full grown tree (84-100%)
 const getTreeLevel = (progress: number): number => {
-  if (progress === 0) return 0;      // Seed
-  if (progress <= 20) return 1;      // Sprout
-  if (progress <= 40) return 2;      // Small tree
-  if (progress <= 60) return 3;      // Medium tree
-  if (progress <= 80) return 4;      // Large tree
+  if (progress <= 16) return 0;      // Seed
+  if (progress <= 33) return 1;      // Sprout
+  if (progress <= 50) return 2;      // Small tree
+  if (progress <= 66) return 3;      // Medium tree
+  if (progress <= 83) return 4;      // Large tree
   return 5;                          // Full grown tree
 };
 
