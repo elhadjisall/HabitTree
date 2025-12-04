@@ -68,13 +68,15 @@ const MainMenu: React.FC = () => {
   } | null>(null);
   const [questToRemove, setQuestToRemove] = useState<string | null>(null);
 
-  // Initialize first character on mount
+  // Initialize first character on mount and sync leaf dollars
   useEffect(() => {
     initializeFirstCharacter();
+    // Refresh leaf dollars from localStorage (in case it was synced from backend)
+    setLeafDollarsState(getLeafDollars());
   }, []);
 
   // Load habit states from logs for selected day
-  useEffect(() => {
+  const loadHabitStates = () => {
     const today = new Date();
     const dayOffset = selectedDay - getTodayIndex();
     const targetDate = new Date(today);
@@ -91,6 +93,20 @@ const MainMenu: React.FC = () => {
       };
     });
     setHabitStates(newStates);
+  };
+
+  useEffect(() => {
+    loadHabitStates();
+  }, [selectedDay, habits]);
+
+  // Re-load states when habit logs are synced from backend
+  useEffect(() => {
+    const handleLogsChanged = () => {
+      loadHabitStates();
+    };
+
+    window.addEventListener('habitLogsChanged', handleLogsChanged);
+    return () => window.removeEventListener('habitLogsChanged', handleLogsChanged);
   }, [selectedDay, habits]);
 
   // Show motivational speech bubble every 5 seconds when viewing today
