@@ -1,0 +1,37 @@
+# Frontend files (not needed for backend)
+node_modules/
+dist/
+src/
+public/
+*.tsx
+*.ts
+*.css
+package.json
+package-lock.json
+vite.config.ts
+tsconfig*.json
+eslint.config.js
+
+# Git
+.git/
+.gitignore
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+
+# Misc
+*.md
+*.log
+.env.local
+
